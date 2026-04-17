@@ -24,10 +24,10 @@ from datetime import datetime
 # ---------------------------------------------------------------------------
 
 def _parse_date(raw: str):
-    """Convertit DD/MM/YYYY ou DD/MM/YY en objet date Python."""
+    """Convertit DD/MM/YYYY, DD-MM-YYYY, DD/MM/YY ou DD-MM-YY en objet date Python."""
     if not raw:
         return None
-    raw = raw.strip()
+    raw = raw.strip().replace("-", "/")
     for fmt in ("%d/%m/%Y", "%d/%m/%y"):
         try:
             return datetime.strptime(raw, fmt).date()
@@ -54,7 +54,7 @@ def extract_header(text: str) -> dict:
     client = _field(r"Client\s*:\s*(.+?)(?=\s{2,}|Date|\n|$)", text)
 
     date_emission = _parse_date(_field(
-        r"Date\s+d.émission\s*:\s*(\d{2}/\d{2}/\d{4})", text
+        r"Date\s+d.émission\s*:\s*(\d{2}[-/]\d{2}[-/]\d{4})", text
     ))
 
     ose = _field(
@@ -76,15 +76,15 @@ def extract_header(text: str) -> dict:
     )
 
     date_prelevement = _parse_date(_field(
-        r"Date\s+du\s+prélèvement\s*:\s*(\d{2}/\d{2}/\d{4})", text
+        r"Date\s+du\s+prélèvement\s*:\s*(\d{2}[-/]\d{2}[-/]\d{4})", text
     ))
 
     date_reception = _parse_date(_field(
-        r"Date\s+de\s+réception\s*:\s*(\d{2}/\d{2}/\d{4})", text
+        r"Date\s+de\s+réception\s*:\s*(\d{2}[-/]\d{2}[-/]\d{4})", text
     ))
 
     date_debut_essais = _parse_date(_field(
-        r"Date\s+du\s+début\s+d.essais\s*:\s*(\d{2}/\d{2}/\d{4})", text
+        r"Date\s+du\s+début\s+d.essais\s*:\s*(\d{2}[-/]\d{2}[-/]\d{4})", text
     ))
 
     responsable = _field(
