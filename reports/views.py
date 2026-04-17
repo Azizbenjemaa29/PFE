@@ -1,10 +1,16 @@
+import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from django.contrib import messages
 from django.db.models import Q
 from .models import Report, RapportHeader, RapportResultat
 from .forms import ReportForm, ProfilForm
 from .extractor import extract_rapport
+
+MAX_UPLOAD_SIZE = 25 * 1024 * 1024  # 25 MB
+MAX_FILES_PER_BATCH = 10
+ALLOWED_EXTENSIONS = {'.pdf', '.png', '.jpg', '.jpeg', '.tiff'}
 
 User = get_user_model()
 
@@ -95,21 +101,68 @@ def dashboard(request):
 @login_required
 def upload_report(request):
     if request.method == 'POST':
-        form = ReportForm(request.POST, request.FILES)
-        if form.is_valid():
-            report = form.save(commit=False)
-            report.user = request.user
-            # Scénario A : extraction directe / Scénario B : envoi à l'admin
-            extract_now = request.POST.get('extract_now') == '1'
-            if extract_now:
-                report.save()
-                _run_extraction(report)
-            else:
-                report.status = 'PENDING'
-                report.save()
-            return redirect('reports:dashboard')
-    else:
-        form = ReportForm()
+        files = request.FILES.getlist('file')
+        title = (request.POST.get('title') or '').strip()
+        extract_now = request.POST.get('extract_now') == '1'
+
+        if not title:
+            messages.error(request, "Le titre du rapport est obligatoire.")
+            return redirect('reports:upload_report')
+        if not files:
+            messages.error(request, "Veuillez sélectionner au moins un fichier.")
+            return redirect('reports:upload_report')
+        if len(files) > MAX_FILES_PER_BATCH:
+            messages.error(
+                request,
+                f"Maximum {MAX_FILES_PER_BATCH} fichiers par lot ({len(files)} soumis)."
+            )
+            return redirect('reports:upload_report')
+
+        success_count = 0
+        fail_count = 0
+        multi = len(files) > 1
+
+        for f in files:
+            ext = os.path.splitext(f.name)[1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                messages.error(request, f"{f.name} : type de fichier non supporté.")
+                fail_count += 1
+                continue
+            if f.size > MAX_UPLOAD_SIZE:
+                messages.error(request, f"{f.name} : fichier trop volumineux (max 25 MB).")
+                fail_count += 1
+                continue
+
+            report_title = f"{title} — {f.name}" if multi else title
+
+            try:
+                report = Report(
+                    title=report_title,
+                    file=f,
+                    user=request.user,
+                )
+                if extract_now:
+                    report.save()
+                    _run_extraction(report)
+                else:
+                    report.status = 'PENDING'
+                    report.save()
+                success_count += 1
+                messages.success(request, f"{f.name} : traité avec succès.")
+            except Exception as e:
+                fail_count += 1
+                messages.error(request, f"{f.name} : échec ({e}).")
+
+        if success_count and not fail_count:
+            messages.success(request, f"{success_count} rapport(s) téléchargé(s).")
+        elif success_count and fail_count:
+            messages.warning(
+                request,
+                f"{success_count} réussi(s), {fail_count} échec(s)."
+            )
+        return redirect('reports:dashboard')
+
+    form = ReportForm()
     return render(request, 'reports/upload.html', {'form': form})
 
 @login_required

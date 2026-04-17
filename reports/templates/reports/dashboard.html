@@ -407,6 +407,17 @@
     <!-- MAIN CONTENT -->
     <div class="main-content">
 
+        {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show py-2" role="alert" style="font-size:.85rem;">
+                {{ message }}
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- Admin Banner -->
         {% if is_admin %}
         <div class="admin-banner">
@@ -484,11 +495,11 @@
                     <div class="col-md-8">
                         <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
                             <div class="upload-icon"><i class="bi bi-cloud-arrow-up"></i></div>
-                            <p><strong>Cliquez ou glissez-déposez</strong> votre fichier ici</p>
-                            <p>PDF, PNG, JPG, TIFF — max. 25 MB</p>
+                            <p><strong>Cliquez ou glissez-déposez</strong> vos fichiers ici</p>
+                            <p>PDF, PNG, JPG, TIFF — max. 25 MB / fichier — 10 fichiers max</p>
                             <div class="file-name" id="file-label" style="display:none;"></div>
                             <input type="file" name="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff"
-                                style="display:none;" required>
+                                style="display:none;" multiple required>
                         </div>
                     </div>
                     <div class="col-md-4 d-flex flex-column gap-2">
@@ -691,26 +702,48 @@
         const fileInput = document.getElementById('file-input');
         const fileLabel = document.getElementById('file-label');
 
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                fileLabel.textContent = '📎 ' + fileInput.files[0].name;
-                fileLabel.style.display = 'block';
+        const MAX_FILES = 10;
+        const MAX_SIZE = 25 * 1024 * 1024;
+        const ALLOWED = ['.pdf', '.png', '.jpg', '.jpeg', '.tiff'];
+
+        function renderFileList() {
+            const files = Array.from(fileInput.files);
+            if (!files.length) {
+                fileLabel.style.display = 'none';
+                return;
             }
-        });
+            const summary = `📎 ${files.length} fichier${files.length > 1 ? 's' : ''} sélectionné${files.length > 1 ? 's' : ''}`;
+            const list = files.map(f => `<div style="font-size:.8rem;">• ${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</div>`).join('');
+            fileLabel.innerHTML = `<strong>${summary}</strong>${list}`;
+            fileLabel.style.display = 'block';
+        }
+
+        function applyFiles(fileArray) {
+            const valid = [];
+            for (const f of fileArray) {
+                const ext = '.' + f.name.split('.').pop().toLowerCase();
+                if (!ALLOWED.includes(ext)) { alert(`${f.name} : type non supporté`); continue; }
+                if (f.size > MAX_SIZE) { alert(`${f.name} : dépasse 25 MB`); continue; }
+                valid.push(f);
+            }
+            if (valid.length > MAX_FILES) {
+                alert(`Maximum ${MAX_FILES} fichiers par lot (${valid.length} sélectionnés).`);
+                return;
+            }
+            const dt = new DataTransfer();
+            valid.forEach(f => dt.items.add(f));
+            fileInput.files = dt.files;
+            renderFileList();
+        }
+
+        fileInput.addEventListener('change', () => applyFiles(Array.from(fileInput.files)));
 
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                fileInput.files = dt.files;
-                fileLabel.textContent = '📎 ' + file.name;
-                fileLabel.style.display = 'block';
-            }
+            applyFiles(Array.from(e.dataTransfer.files));
         });
 
         const extractToggle = document.getElementById('extract-toggle');
