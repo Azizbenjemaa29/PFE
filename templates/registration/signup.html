@@ -1,0 +1,50 @@
+
+
+{% extends 'registration/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <img src="{% static 'core/images/logo.png' %}" alt="Poulina Group Holding" style="height: 60px;">
+                </div>
+                <h2 class="text-center mb-4">Inscription</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">S'inscrire</button>
+                    </div>
+                </form>
+                <div class="text-center mt-3">
+                    <p>Déjà un compte ? <a href="{% url 'login' %}">Se connecter</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Simple script to add Bootstrap classes to form fields rendered by Django -->
+<script>
+    document.querySelectorAll('input, select, textarea').forEach(function (el) {
+        if (!el.classList.contains('form-control') && !el.classList.contains('form-check-input')) {
+            el.classList.add('form-control');
+        }
+    });
+</script>
+{% endblock %}
+

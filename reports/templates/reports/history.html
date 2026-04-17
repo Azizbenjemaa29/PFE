@@ -1,0 +1,474 @@
+
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique — LabAssistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a4f7a;
+            --accent: #c9a227;
+            --sidebar-width: 230px;
+            --topbar-height: 60px;
+            --bg: #f0f4f8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* TOP BAR */
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+        }
+
+        .topbar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .topbar .brand img {
+            height: 36px;
+        }
+
+        .topbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .topbar .avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* LEFT SIDEBAR */
+        .left-sidebar {
+            width: var(--sidebar-width);
+            background: #fff;
+            position: fixed;
+            top: var(--topbar-height);
+            bottom: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e7ef;
+            z-index: 90;
+        }
+
+        .nav-section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            letter-spacing: 0.1em;
+            padding: 18px 20px 6px;
+        }
+
+        .left-sidebar .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            color: #333;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            font-size: 0.92rem;
+            transition: all .2s;
+        }
+
+        .left-sidebar .nav-item a:hover,
+        .left-sidebar .nav-item a.active {
+            background: #f0f4f8;
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid #e0e7ef;
+        }
+
+        /* MAIN */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--topbar-height);
+            padding: 32px;
+            overflow-y: auto;
+            height: calc(100vh - var(--topbar-height));
+        }
+
+        /* HISTORY TIMELINE */
+        .page-header {
+            margin-bottom: 28px;
+        }
+
+        .page-header h2 {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .filter-bar {
+            background: #fff;
+            border-radius: 10px;
+            padding: 14px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+            margin-bottom: 24px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select,
+        .filter-bar input {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 28px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), #c0cfde);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .timeline-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .1);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -33px;
+            top: 22px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .timeline-item .th-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .timeline-item .th-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1a1a2e;
+        }
+
+        .timeline-item .th-date {
+            font-size: 0.78rem;
+            color: #6c757d;
+        }
+
+        .timeline-item .th-file {
+            font-size: 0.82rem;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-completed {
+            background: #d1e7dd;
+            color: #0a5c36;
+        }
+
+        .badge-processing {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .badge-failed {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .badge-refused {
+            background: #e2e3e5;
+            color: #41464b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            opacity: .3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="brand">
+            <img src="{% static 'reports/images/logo.png' %}" alt="Poulina">
+            LabAssistant
+        </div>
+        <div class="user-info">
+            <span style="font-size:.85rem; opacity:.85;">
+                <i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i>
+                Bonjour, <strong>{{ user.username }}</strong>
+            </span>
+            <div class="avatar">{{ user.username|first|upper }}</div>
+            {% if user.is_staff %}
+            <a href="/admin/" class="btn btn-sm" style="background:rgba(255,255,255,.15); color:white; border:none;">
+                <i class="bi bi-shield-lock"></i> Admin
+            </a>
+            {% endif %}
+            <form action="{% url 'logout' %}" method="post" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm"
+                    style="background:rgba(255,255,255,.15); color:white; border:none;">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LEFT SIDEBAR -->
+    <div class="left-sidebar">
+        <div class="nav-section-label">Navigation</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{% url 'reports:dashboard' %}">
+                    <i class="bi bi-file-earmark-medical"></i> Mes Rapports
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'reports:upload_report' %}">
+                    <i class="bi bi-cloud-upload"></i> Nouveau rapport
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'reports:history' %}" class="active">
+                    <i class="bi bi-clock-history"></i> Historique
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#">
+                    <i class="bi bi-chat-dots"></i> Assistant IA
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-section-label">Paramètres</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{% url 'reports:profil' %}">
+                    <i class="bi bi-person"></i> Mon profil
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+            <div style="font-size:.75rem; color:#6c757d;">
+                <img src="{% static 'reports/images/logo.png' %}" alt="" style="height:20px; margin-bottom:4px;"><br>
+                © 2026 Poulina Group
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="page-header">
+            <h2><i class="bi bi-clock-history me-2"></i>Historique des activités</h2>
+            <p>Toutes vos opérations de traitement de rapports, les plus récentes en premier.</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <i class="bi bi-funnel text-muted"></i>
+            <select id="status-filter">
+                <option value="">Tous les statuts</option>
+                <option value="PENDING">En attente</option>
+                <option value="PROCESSING">En traitement</option>
+                <option value="COMPLETED">Terminé</option>
+                <option value="FAILED">Échec</option>
+                <option value="REFUSED">Refusé</option>
+            </select>
+            <input type="text" id="search-filter" placeholder="Rechercher un rapport…">
+            <span class="ms-auto text-muted" style="font-size:.82rem;">
+                {{ reports|length }} rapport{% if reports|length > 1 %}s{% endif %} au total
+            </span>
+        </div>
+
+        {% if reports %}
+        <div class="timeline" id="timeline">
+            {% for report in reports %}
+            <div class="timeline-item" data-status="{{ report.status }}" data-title="{{ report.title|lower }}">
+                <div class="timeline-dot"
+                    style="background:{% if report.status == 'COMPLETED' %}#0a5c36{% elif report.status == 'PROCESSING' %}#084298{% elif report.status == 'FAILED' %}#842029{% elif report.status == 'REFUSED' %}#41464b{% else %}#856404{% endif %}">
+                </div>
+
+                <div class="th-header">
+                    <div class="th-title">{{ report.title }}</div>
+                    <div class="th-date">
+                        <i class="bi bi-calendar3 me-1"></i>{{ report.uploaded_at|date:"d/m/Y à H:i" }}
+                    </div>
+                </div>
+
+                <div class="th-file">
+                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i>
+                    <a href="{{ report.file.url }}" target="_blank" class="text-decoration-none text-muted">
+                        {{ report.file.name|slice:"8:" }}
+                    </a>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between">
+                    <span>
+                        {% if report.status == 'PENDING' %}
+                        <span class="badge badge-pending rounded-pill px-3"><i class="bi bi-hourglass me-1"></i>En
+                            attente</span>
+                        {% elif report.status == 'PROCESSING' %}
+                        <span class="badge badge-processing rounded-pill px-3"><i class="bi bi-arrow-repeat me-1"></i>En
+                            traitement</span>
+                        {% elif report.status == 'COMPLETED' %}
+                        <span class="badge badge-completed rounded-pill px-3"><i
+                                class="bi bi-check-circle me-1"></i>Terminé</span>
+                        {% elif report.status == 'REFUSED' %}
+                        <span class="badge badge-refused rounded-pill px-3"><i
+                                class="bi bi-slash-circle me-1"></i>Refusé</span>
+                        {% else %}
+                        <span class="badge badge-failed rounded-pill px-3"><i
+                                class="bi bi-x-circle me-1"></i>Échec</span>
+                        {% endif %}
+                    </span>
+                    <div class="d-flex align-items-center gap-3">
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>{{ report.uploaded_at|timesince }}
+                        </small>
+                        <form action="{% url 'reports:delete_report' report.pk %}" method="post" class="d-inline"
+                            onsubmit="return confirm('Voulez-vous vraiment supprimer ce rapport ?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger border-0 p-1">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div id="no-results" style="display:none;" class="empty-state">
+            <i class="bi bi-search"></i>
+            <p class="mt-3">Aucun résultat pour votre recherche.</p>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p class="mt-3">Aucune activité pour l'instant.<br>
+                <a href="{% url 'reports:upload_report' %}">Télécharger votre premier rapport →</a>
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Live filter
+        const statusFilter = document.getElementById('status-filter');
+        const searchFilter = document.getElementById('search-filter');
+        const items = document.querySelectorAll('.timeline-item');
+        const noResults = document.getElementById('no-results');
+
+        function applyFilters() {
+            const status = statusFilter ? statusFilter.value : '';
+            const search = searchFilter ? searchFilter.value.toLowerCase() : '';
+            let visible = 0;
+            items.forEach(item => {
+                const matchStatus = !status || item.dataset.status === status;
+                const matchSearch = !search || item.dataset.title.includes(search);
+                item.style.display = (matchStatus && matchSearch) ? 'block' : 'none';
+                if (matchStatus && matchSearch) visible++;
+            });
+            if (noResults) noResults.style.display = visible === 0 && items.length > 0 ? 'block' : 'none';
+        }
+
+        if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+        if (searchFilter) searchFilter.addEventListener('input', applyFilters);
+    </script>
+</body>
+
+</html>
+

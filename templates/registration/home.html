@@ -1,0 +1,648 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabAssistant — Poulina Group Holding</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a4f7a;
+            --primary-light: #2a6496;
+            --accent: #c9a227;
+            --dark: #0d1b2a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            color: #1a1a2e;
+            overflow-x: hidden;
+        }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(10px);
+            padding: 14px 0;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 20px rgba(0,0,0,.08);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--primary) !important;
+            text-decoration: none;
+        }
+
+        .navbar-brand img { height: 38px; }
+
+        .nav-btn-login {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 8px;
+            padding: 7px 20px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all .2s;
+        }
+
+        .nav-btn-login:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-btn-cta {
+            background: var(--primary);
+            color: white !important;
+            border-radius: 8px;
+            padding: 7px 20px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: background .2s;
+        }
+
+        .nav-btn-cta:hover { background: var(--primary-light); }
+
+        /* ── HERO ── */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 60%, #1e6fa8 100%);
+            display: flex;
+            align-items: center;
+            padding-top: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -200px; right: -200px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(201,162,39,.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -150px; left: -100px;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,.05) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(201,162,39,.2);
+            border: 1px solid rgba(201,162,39,.4);
+            color: #f0c84a;
+            border-radius: 20px;
+            padding: 5px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 800;
+            color: white;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .hero p.lead {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,.8);
+            line-height: 1.7;
+            margin-bottom: 36px;
+            max-width: 500px;
+        }
+
+        .btn-hero-primary {
+            background: var(--accent);
+            color: var(--dark);
+            border: none;
+            border-radius: 10px;
+            padding: 14px 32px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hero-primary:hover {
+            background: #e0b430;
+            color: var(--dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(201,162,39,.4);
+        }
+
+        .btn-hero-secondary {
+            background: rgba(255,255,255,.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,.3);
+            border-radius: 10px;
+            padding: 14px 32px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,.2);
+            color: white;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 48px;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: left;
+        }
+
+        .hero-stat .num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .hero-stat .lbl {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,.6);
+            margin-top: 2px;
+        }
+
+        .hero-visual {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-card {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.15);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+        }
+
+        .hero-card .card-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: rgba(255,255,255,.5);
+            margin-bottom: 16px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            font-size: 0.85rem;
+        }
+
+        .status-item:last-child { border-bottom: none; }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .float-card {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.2);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── FEATURES ── */
+        .features {
+            padding: 100px 0;
+            background: #f8fafc;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: .15em;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 16px;
+        }
+
+        .section-sub {
+            color: #6c757d;
+            font-size: 1rem;
+            max-width: 520px;
+            margin: 0 auto 60px;
+        }
+
+        .feat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px 28px;
+            height: 100%;
+            border: 1px solid #e8edf5;
+            transition: all .25s;
+        }
+
+        .feat-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 48px rgba(26,79,122,.12);
+            border-color: var(--primary);
+        }
+
+        .feat-icon {
+            width: 56px; height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .feat-card h5 {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .feat-card p {
+            font-size: 0.88rem;
+            color: #6c757d;
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        /* ── HOW IT WORKS ── */
+        .how-it-works {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .step-num {
+            width: 48px; height: 48px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin: 0 auto 20px;
+            flex-shrink: 0;
+        }
+
+        .step-connector {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            margin: 0 -10px;
+            align-self: center;
+            margin-top: -52px;
+        }
+
+        /* ── CTA ── */
+        .cta-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--dark), var(--primary));
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -100px; left: 50%;
+            transform: translateX(-50%);
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(201,162,39,.1) 0%, transparent 70%);
+        }
+
+        .cta-section h2 {
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            font-weight: 800;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            color: rgba(255,255,255,.75);
+            font-size: 1rem;
+            margin-bottom: 40px;
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            background: var(--dark);
+            color: rgba(255,255,255,.6);
+            padding: 40px 0;
+            font-size: 0.85rem;
+        }
+
+        .footer .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .footer .brand img { height: 28px; }
+
+        hr.footer-divider {
+            border-color: rgba(255,255,255,.1);
+            margin: 24px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img src="{% static 'reports/images/logo.png' %}" alt="Poulina">
+                LabAssistant
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                {% if user.is_authenticated %}
+                <a href="{% url 'reports:dashboard' %}" class="nav-btn-cta">
+                    <i class="bi bi-grid me-1"></i> Mon tableau de bord
+                </a>
+                {% else %}
+                <a href="{% url 'login' %}" class="nav-btn-login">Se connecter</a>
+                <a href="{% url 'signup' %}" class="nav-btn-cta">Créer un compte</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container position-relative" style="z-index:1;">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <div class="hero-badge">
+                        <i class="bi bi-stars"></i>
+                        Intelligence Artificielle & OCR
+                    </div>
+                    <h1>
+                        Gérez vos rapports de labo avec <span>LabAssistant</span>
+                    </h1>
+                    <p class="lead">
+                        Automatisez l'extraction de données depuis vos rapports PDF et images.
+                        Un assistant IA intégré pour analyser et valoriser vos résultats de laboratoire.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'reports:dashboard' %}" class="btn-hero-primary">
+                            <i class="bi bi-grid-fill"></i> Accéder au dashboard
+                        </a>
+                        {% else %}
+                        <a href="{% url 'signup' %}" class="btn-hero-primary">
+                            <i class="bi bi-rocket-takeoff"></i> Commencer gratuitement
+                        </a>
+                        <a href="{% url 'login' %}" class="btn-hero-secondary">
+                            <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="num">OCR</div>
+                            <div class="lbl">Extraction automatique</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="num">IA</div>
+                            <div class="lbl">Assistant intégré</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="num">Multi</div>
+                            <div class="lbl">Filiales supportées</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 hero-visual">
+                    <div class="hero-card">
+                        <div class="card-title"><i class="bi bi-activity me-2"></i>Rapports récents</div>
+                        <div class="status-item">
+                            <div class="status-dot" style="background:#22c55e;"></div>
+                            <span style="flex:1; opacity:.85;">Rapport_Labo_Mars_2026.pdf</span>
+                            <span style="font-size:.75rem; background:rgba(34,197,94,.15); color:#22c55e; padding:2px 10px; border-radius:10px;">Terminé</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-dot" style="background:#3b82f6;"></div>
+                            <span style="flex:1; opacity:.85;">Analyse_Chimique_Q1.pdf</span>
+                            <span style="font-size:.75rem; background:rgba(59,130,246,.15); color:#3b82f6; padding:2px 10px; border-radius:10px;">Traitement</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-dot" style="background:#f59e0b;"></div>
+                            <span style="flex:1; opacity:.85;">Controle_Qualite_Feb.png</span>
+                            <span style="font-size:.75rem; background:rgba(245,158,11,.15); color:#f59e0b; padding:2px 10px; border-radius:10px;">En attente</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-dot" style="background:#22c55e;"></div>
+                            <span style="flex:1; opacity:.85;">Test_Microbiologie_Feb.pdf</span>
+                            <span style="font-size:.75rem; background:rgba(34,197,94,.15); color:#22c55e; padding:2px 10px; border-radius:10px;">Terminé</span>
+                        </div>
+                        <div class="mt-4 pt-2" style="border-top:1px solid rgba(255,255,255,.1); display:flex; align-items:center; gap:10px; font-size:.82rem; color:rgba(255,255,255,.5);">
+                            <i class="bi bi-cpu" style="color:var(--accent);"></i>
+                            Assistant IA prêt à analyser vos données…
+                        </div>
+                    </div>
+
+                    <!-- floating badges -->
+                    <div class="float-card" style="top:-20px; right:20px;">
+                        <i class="bi bi-file-earmark-check" style="color:#22c55e; font-size:1.1rem;"></i>
+                        PDF & Images supportés
+                    </div>
+                    <div class="float-card" style="bottom:10px; left:-20px;">
+                        <i class="bi bi-shield-check" style="color:var(--primary); font-size:1.1rem;"></i>
+                        Données sécurisées
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="container text-center">
+            <div class="section-label">Fonctionnalités</div>
+            <h2 class="section-title">Tout ce dont vous avez besoin</h2>
+            <p class="section-sub">Une plateforme complète pour digitaliser et automatiser la gestion de vos rapports de laboratoire.</p>
+
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="feat-card">
+                        <div class="feat-icon" style="background:#e8f0fe;">
+                            <i class="bi bi-file-earmark-text" style="color:var(--primary);"></i>
+                        </div>
+                        <h5>Extraction OCR</h5>
+                        <p>Extrayez automatiquement le texte de vos PDF et images avec une précision optimale.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feat-card">
+                        <div class="feat-icon" style="background:#fef3c7;">
+                            <i class="bi bi-chat-dots" style="color:#d97706;"></i>
+                        </div>
+                        <h5>Assistant IA</h5>
+                        <p>Posez des questions sur vos rapports et obtenez des analyses intelligentes en temps réel.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feat-card">
+                        <div class="feat-icon" style="background:#d1fae5;">
+                            <i class="bi bi-people" style="color:#059669;"></i>
+                        </div>
+                        <h5>Multi-utilisateurs</h5>
+                        <p>Gérez vos équipes par filiale avec des rôles administrateur et utilisateur distincts.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feat-card">
+                        <div class="feat-icon" style="background:#fce7f3;">
+                            <i class="bi bi-clock-history" style="color:#db2777;"></i>
+                        </div>
+                        <h5>Suivi en temps réel</h5>
+                        <p>Suivez l'état de traitement de chaque rapport avec un historique complet des activités.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works">
+        <div class="container text-center">
+            <div class="section-label">Processus</div>
+            <h2 class="section-title">Comment ça marche ?</h2>
+            <p class="section-sub mb-5">Trois étapes simples pour transformer vos rapports en données exploitables.</p>
+
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-4">
+                    <div class="step-num">1</div>
+                    <h5 class="fw-700 mb-2" style="font-weight:700;">Importez votre rapport</h5>
+                    <p class="text-muted" style="font-size:.9rem;">Glissez-déposez votre fichier PDF ou image directement depuis votre ordinateur.</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="step-num">2</div>
+                    <h5 class="fw-700 mb-2" style="font-weight:700;">Extraction automatique</h5>
+                    <p class="text-muted" style="font-size:.9rem;">Notre moteur OCR analyse et extrait automatiquement toutes les données du document.</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="step-num">3</div>
+                    <h5 class="fw-700 mb-2" style="font-weight:700;">Analysez avec l'IA</h5>
+                    <p class="text-muted" style="font-size:.9rem;">Interrogez votre assistant IA pour obtenir des insights et des analyses approfondies.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="container position-relative" style="z-index:1;">
+            {% if user.is_authenticated %}
+            <h2>Bienvenue, {{ user.username }} !</h2>
+            <p>Votre espace de travail vous attend.</p>
+            <a href="{% url 'reports:dashboard' %}" class="btn-hero-primary" style="display:inline-flex;">
+                <i class="bi bi-grid-fill"></i> Accéder au dashboard
+            </a>
+            {% else %}
+            <h2>Prêt à digitaliser vos rapports ?</h2>
+            <p>Rejoignez Poulina Group LabAssistant et transformez votre gestion de laboratoire.</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{% url 'signup' %}" class="btn-hero-primary" style="display:inline-flex;">
+                    <i class="bi bi-rocket-takeoff"></i> Créer un compte
+                </a>
+                <a href="{% url 'login' %}" class="btn-hero-secondary" style="display:inline-flex;">
+                    <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="brand">
+                        <img src="{% static 'reports/images/logo.png' %}" alt="Poulina">
+                        LabAssistant
+                    </div>
+                    <div>Système de gestion de rapports de laboratoire</div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div style="color:rgba(255,255,255,.4); font-size:.8rem;">
+                        © 2026 Poulina Group Holding. Tous droits réservés.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

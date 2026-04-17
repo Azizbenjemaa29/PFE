@@ -1,0 +1,789 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - LabAssistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a4f7a;
+            --primary-light: #2a6496;
+            --accent: #c9a227;
+            --sidebar-width: 230px;
+            --right-sidebar-width: 300px;
+            --topbar-height: 60px;
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-muted: #6c757d;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* TOP BAR */
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: white;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+        }
+
+        .topbar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .topbar .brand img { height: 36px; }
+
+        .topbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .topbar .avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* LEFT SIDEBAR */
+        .left-sidebar {
+            width: var(--sidebar-width);
+            background: #fff;
+            position: fixed;
+            top: var(--topbar-height);
+            bottom: 0; left: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e7ef;
+            z-index: 90;
+        }
+
+        .left-sidebar .nav-section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            padding: 18px 20px 6px;
+        }
+
+        .left-sidebar .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            color: #333;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            font-size: 0.92rem;
+            transition: all .2s;
+        }
+
+        .left-sidebar .nav-item a:hover,
+        .left-sidebar .nav-item a.active {
+            background: #f0f4f8;
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .left-sidebar .nav-item a i { font-size: 1rem; }
+
+        .left-sidebar .sidebar-bottom {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid #e0e7ef;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            margin-right: var(--right-sidebar-width);
+            margin-top: var(--topbar-height);
+            padding: 28px;
+            overflow-y: auto;
+            height: calc(100vh - var(--topbar-height));
+        }
+
+        /* RIGHT SIDEBAR */
+        .right-sidebar {
+            width: var(--right-sidebar-width);
+            background: #fff;
+            position: fixed;
+            top: var(--topbar-height);
+            bottom: 0; right: 0;
+            overflow-y: auto;
+            border-left: 1px solid #e0e7ef;
+            padding: 20px;
+        }
+
+        .right-sidebar h6 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e7ef;
+        }
+
+        /* OCR UPLOAD CARD */
+        .ocr-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.07);
+            margin-bottom: 24px;
+        }
+
+        .ocr-card h5 {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #c0cfde;
+            border-radius: 10px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .25s;
+            background: #f8fafc;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: #eef4fb;
+        }
+
+        .drop-zone .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-light);
+            margin-bottom: 12px;
+        }
+
+        .drop-zone p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .drop-zone .file-name {
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 6px;
+            font-size: 0.95rem;
+        }
+
+        /* STATS CARDS */
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .stat-card .stat-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* ACTIVITY FEED */
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            font-size: 0.85rem;
+        }
+
+        .activity-item .act-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .activity-item .act-body .act-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .activity-item .act-body .act-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* STATUS BADGES */
+        .badge-pending   { background:#fff3cd; color:#856404; }
+        .badge-completed { background:#d1e7dd; color:#0a5c36; }
+        .badge-processing{ background:#cfe2ff; color:#084298; }
+        .badge-failed    { background:#f8d7da; color:#842029; }
+        .badge-refused   { background:#e2e3e5; color:#41464b; }
+
+        /* REPORTS TABLE */
+        .reports-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.07);
+            overflow: hidden;
+        }
+
+        .reports-card .card-header-custom {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e7ef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reports-card table th {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+            background: #f8fafc;
+        }
+
+        /* Admin banner */
+        .admin-banner {
+            background: linear-gradient(135deg, #1a4f7a, #2a6496);
+            color: white;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #ocr-progress { display: none; }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="brand">
+            <img src="{% static 'reports/images/logo.png' %}" alt="Poulina">
+            LabAssistant
+        </div>
+        <div class="user-info">
+            <span style="font-size:.85rem; opacity:.85;">
+                <i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i>
+                Bonjour, <strong>{{ user.username }}</strong>
+                {% if is_admin %}
+                <span class="badge ms-2" style="background:var(--accent); color:#333; font-size:0.7rem;">
+                    <i class="bi bi-shield-lock me-1"></i>Admin
+                </span>
+                {% endif %}
+            </span>
+            <div class="avatar">{{ user.username|first|upper }}</div>
+            {% if user.is_staff %}
+            <a href="/admin/" class="btn btn-sm" style="background:rgba(255,255,255,.15); color:white; border:none;">
+                <i class="bi bi-shield-lock"></i> Admin
+            </a>
+            {% endif %}
+            <form action="{% url 'logout' %}" method="post" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background:rgba(255,255,255,.15); color:white; border:none;">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LEFT SIDEBAR -->
+    <div class="left-sidebar">
+        <div class="nav-section-label">Navigation</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{% url 'reports:dashboard' %}" class="active">
+                    <i class="bi bi-file-earmark-medical"></i>
+                    {% if is_admin %}Tous les Rapports{% else %}Mes Rapports{% endif %}
+                </a>
+            </li>
+            {% if not is_admin %}
+            <li class="nav-item">
+                <a href="{% url 'reports:upload_report' %}">
+                    <i class="bi bi-cloud-upload"></i> Nouveau rapport
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a href="{% url 'reports:history' %}" id="toggle-history">
+                    <i class="bi bi-clock-history"></i> Historique
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#">
+                    <i class="bi bi-chat-dots"></i> Assistant IA
+                </a>
+            </li>
+        </ul>
+
+        {% if is_admin %}
+        <div class="nav-section-label">Administration</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{% url 'reports:manage_users' %}">
+                    <i class="bi bi-people"></i> Gestion Users
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+
+        <div class="nav-section-label">Paramètres</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{% url 'reports:profil' %}">
+                    <i class="bi bi-person"></i> Mon profil
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+            <div style="font-size:.75rem; color:var(--text-muted);">
+                <img src="{% static 'reports/images/logo.png' %}" alt="" style="height:20px; margin-bottom:4px;"><br>
+                © 2026 Poulina Group
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- Admin Banner -->
+        {% if is_admin %}
+        <div class="admin-banner">
+            <i class="bi bi-shield-lock" style="font-size:1.5rem;"></i>
+            <div>
+                <div style="font-weight:700; font-size:1rem;">Mode Administrateur</div>
+                <div style="font-size:0.82rem; opacity:.85;">Vous visualisez tous les rapports de tous les utilisateurs.</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Stats -->
+        <h5 style="font-weight:700; font-size:1rem; color:var(--primary);">
+            <i class="bi bi-file-earmark-medical me-2"></i>
+            {% if is_admin %}Tableau de Bord Admin{% else %}Mes Rapports{% endif %}
+        </h5>
+
+        <div class="row g-3 mb-4">
+            <div class="{% if is_admin %}col-md-3{% else %}col-md-4{% endif %}">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e8f0fe;">
+                        <i class="bi bi-file-earmark-text" style="color:#1a4f7a;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ reports|length }}</div>
+                        <div class="stat-label">Rapports au total</div>
+                    </div>
+                </div>
+            </div>
+            <div class="{% if is_admin %}col-md-3{% else %}col-md-4{% endif %}">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#d1e7dd;">
+                        <i class="bi bi-check-circle" style="color:#0a5c36;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ completed_count }}</div>
+                        <div class="stat-label">Traitement terminé</div>
+                    </div>
+                </div>
+            </div>
+            <div class="{% if is_admin %}col-md-3{% else %}col-md-4{% endif %}">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fff3cd;">
+                        <i class="bi bi-hourglass-split" style="color:#856404;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ pending_count }}</div>
+                        <div class="stat-label">En attente</div>
+                    </div>
+                </div>
+            </div>
+            {% if is_admin %}
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f3e8ff;">
+                        <i class="bi bi-people" style="color:#6f42c1;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ users_count }}</div>
+                        <div class="stat-label">Utilisateurs</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- OCR Upload Section (user seulement) -->
+        {% if not is_admin %}
+        <div class="ocr-card">
+            <h5><i class="bi bi-magic me-2"></i>Extraction OCR</h5>
+            <p class="text-muted small mb-4">Téléchargez un rapport PDF ou image pour extraire automatiquement le texte.</p>
+            <form method="post" action="{% url 'reports:upload_report' %}" enctype="multipart/form-data" id="ocr-form">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                            <div class="upload-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+                            <p><strong>Cliquez ou glissez-déposez</strong> votre fichier ici</p>
+                            <p>PDF, PNG, JPG, TIFF — max. 25 MB</p>
+                            <div class="file-name" id="file-label" style="display:none;"></div>
+                            <input type="file" name="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff"
+                                style="display:none;" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4 d-flex flex-column gap-2">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Titre du rapport</label>
+                        <input type="text" name="title" class="form-control" placeholder="ex: Rapport Labo Mars" required>
+                        <div id="ocr-progress" class="mt-2">
+                            <div class="d-flex justify-content-between mb-1" style="font-size:.8rem;">
+                                <span>Traitement en cours…</span>
+                                <span id="progress-pct">0%</span>
+                            </div>
+                            <div class="progress" style="height:6px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                    id="progress-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="extract-toggle" name="extract_now" value="1" checked>
+                            <label class="form-check-label" for="extract-toggle" style="font-size:.82rem;">
+                                Extraction automatique
+                            </label>
+                        </div>
+                        <small class="text-muted" id="extract-hint" style="font-size:.75rem;">
+                            Le rapport sera traité immédiatement.
+                        </small>
+                        <button type="submit" class="btn mt-auto" id="submit-btn" style="background:var(--primary); color:white;">
+                            <i class="bi bi-cpu me-1"></i> Lancer l'extraction
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Admin Filter Bar -->
+        {% if is_admin %}
+        <div class="ocr-card" style="padding:16px 20px;">
+            <form method="get" action="{% url 'reports:dashboard' %}" id="admin-filter-form" class="d-flex align-items-center gap-3 flex-wrap">
+                <i class="bi bi-search text-muted"></i>
+                <input type="text" name="q" id="admin-search" class="form-control form-control-sm"
+                    style="max-width:320px;" placeholder="Rechercher par titre ou utilisateur…"
+                    value="{{ search_query|default:'' }}">
+                <select name="status" id="admin-status-filter" class="form-select form-select-sm" style="max-width:180px;">
+                    <option value="">Tous les statuts</option>
+                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>En attente</option>
+                    <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Terminé</option>
+                    <option value="REFUSED" {% if status_filter == 'REFUSED' %}selected{% endif %}>Refusé</option>
+                    <option value="PROCESSING" {% if status_filter == 'PROCESSING' %}selected{% endif %}>Traitement</option>
+                    <option value="FAILED" {% if status_filter == 'FAILED' %}selected{% endif %}>Échec</option>
+                </select>
+                <button type="submit" class="btn btn-sm" style="background:var(--primary); color:white;">
+                    <i class="bi bi-funnel me-1"></i>Filtrer
+                </button>
+                <a href="{% url 'reports:dashboard' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Réinitialiser
+                </a>
+                <span class="ms-auto text-muted" style="font-size:.82rem;" id="results-count">
+                    {{ reports|length }} rapport{{ reports|length|pluralize:"s" }}
+                </span>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Reports Table -->
+        <div class="reports-card">
+            <div class="card-header-custom">
+                <strong style="font-size:.95rem;">
+                    {% if is_admin %}Tous les Rapports{% else %}Mes Rapports{% endif %}
+                </strong>
+                {% if not is_admin %}
+                <a href="{% url 'reports:upload_report' %}" class="btn btn-sm" style="background:var(--primary); color:white;">
+                    <i class="bi bi-plus"></i> Nouveau
+                </a>
+                {% endif %}
+            </div>
+            {% if reports %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">Titre</th>
+                            {% if is_admin %}<th>Utilisateur</th>{% endif %}
+                            <th>Fichier</th>
+                            <th>Date</th>
+                            <th>Statut</th>
+                            <th class="text-end pe-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr class="report-row" data-title="{{ report.title|lower }}" data-user="{{ report.user.nom|lower }}" data-status="{{ report.status }}">
+                            <td class="ps-3 fw-semibold">{{ report.title }}</td>
+                            {% if is_admin %}
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-person me-1"></i>{{ report.user.nom }}
+                                </span>
+                            </td>
+                            {% endif %}
+                            <td>
+                                <a href="{{ report.file.url }}" target="_blank" class="text-decoration-none">
+                                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ report.filename }}
+                                </a>
+                            </td>
+                            <td class="text-muted" style="font-size:.85rem;">{{ report.uploaded_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if report.status == 'PENDING' %}
+                                <span class="badge badge-pending rounded-pill px-3">En attente</span>
+                                {% elif report.status == 'PROCESSING' %}
+                                <span class="badge badge-processing rounded-pill px-3">Traitement</span>
+                                {% elif report.status == 'COMPLETED' %}
+                                <span class="badge badge-completed rounded-pill px-3">Terminé</span>
+                                {% elif report.status == 'REFUSED' %}
+                                <span class="badge badge-refused rounded-pill px-3">Refusé</span>
+                                {% else %}
+                                <span class="badge badge-failed rounded-pill px-3">Échec</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                {% if is_admin and report.status == 'PENDING' %}
+                                <form action="{% url 'reports:approve_report' report.pk %}" method="post" class="d-inline"
+                                    onsubmit="return confirm('Approuver et lancer l\'extraction ?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success border-0" title="Approuver">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                                <form action="{% url 'reports:refuse_report' report.pk %}" method="post" class="d-inline"
+                                    onsubmit="return confirm('Refuser ce rapport ?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Refuser">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form action="{% url 'reports:delete_report' report.pk %}" method="post" class="d-inline"
+                                    onsubmit="return confirm('Voulez-vous vraiment supprimer ce rapport ?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox" style="font-size:2.5rem; opacity:.4;"></i>
+                <p class="mt-2">Aucun rapport pour l'instant.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="right-sidebar" id="right-sidebar">
+        <h6><i class="bi bi-clock-history me-2"></i>Historique des activités</h6>
+        {% if reports %}
+        {% for report in reports|slice:":10" %}
+        <div class="activity-item">
+            <div class="act-icon
+                {% if report.status == 'COMPLETED' %}bg-success bg-opacity-10 text-success
+                {% elif report.status == 'PROCESSING' %}bg-primary bg-opacity-10 text-primary
+                {% elif report.status == 'FAILED' %}bg-danger bg-opacity-10 text-danger
+                {% elif report.status == 'REFUSED' %}bg-dark bg-opacity-10 text-dark
+                {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
+                {% if report.status == 'COMPLETED' %}<i class="bi bi-check-lg"></i>
+                {% elif report.status == 'PROCESSING' %}<i class="bi bi-arrow-repeat"></i>
+                {% elif report.status == 'FAILED' %}<i class="bi bi-x-lg"></i>
+                {% elif report.status == 'REFUSED' %}<i class="bi bi-slash-circle"></i>
+                {% else %}<i class="bi bi-hourglass"></i>{% endif %}
+            </div>
+            <div class="act-body">
+                <div class="act-title">{{ report.title|truncatechars:28 }}</div>
+                {% if is_admin %}
+                <div class="act-time" style="color:var(--primary); font-size:0.75rem;">
+                    <i class="bi bi-person me-1"></i>{{ report.user.nom }}
+                </div>
+                {% endif %}
+                <div class="act-time">
+                    <i class="bi bi-clock me-1"></i>{{ report.uploaded_at|timesince }} ago
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center text-muted py-4" style="font-size:.85rem;">
+            <i class="bi bi-calendar-x" style="font-size:2rem; opacity:.4;"></i>
+            <p class="mt-2">Aucune activité récente.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        {% if not is_admin %}
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileLabel = document.getElementById('file-label');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileLabel.textContent = '📎 ' + fileInput.files[0].name;
+                fileLabel.style.display = 'block';
+            }
+        });
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                fileLabel.textContent = '📎 ' + file.name;
+                fileLabel.style.display = 'block';
+            }
+        });
+
+        const extractToggle = document.getElementById('extract-toggle');
+        const extractHint = document.getElementById('extract-hint');
+        const submitBtn = document.getElementById('submit-btn');
+        extractToggle.addEventListener('change', () => {
+            if (extractToggle.checked) {
+                extractHint.textContent = 'Le rapport sera traité immédiatement.';
+                submitBtn.innerHTML = '<i class="bi bi-cpu me-1"></i> Lancer l\'extraction';
+            } else {
+                extractHint.textContent = 'Le rapport sera envoyé à l\'admin pour validation.';
+                submitBtn.innerHTML = '<i class="bi bi-send me-1"></i> Envoyer à l\'admin';
+            }
+        });
+
+        document.getElementById('ocr-form').addEventListener('submit', () => {
+            const progress = document.getElementById('ocr-progress');
+            const bar = document.getElementById('progress-bar');
+            const pct = document.getElementById('progress-pct');
+            progress.style.display = 'block';
+            let val = 0;
+            const interval = setInterval(() => {
+                val = Math.min(val + Math.random() * 15, 90);
+                bar.style.width = val + '%';
+                pct.textContent = Math.round(val) + '%';
+                if (val >= 90) clearInterval(interval);
+            }, 200);
+        });
+        {% endif %}
+
+        const toggleBtn = document.getElementById('toggle-history');
+        const rightSidebar = document.getElementById('right-sidebar');
+        const mainContent = document.querySelector('.main-content');
+        let historyVisible = true;
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            historyVisible = !historyVisible;
+            if (historyVisible) {
+                rightSidebar.style.display = 'block';
+                mainContent.style.marginRight = 'var(--right-sidebar-width)';
+                toggleBtn.classList.add('active');
+            } else {
+                rightSidebar.style.display = 'none';
+                mainContent.style.marginRight = '0';
+                toggleBtn.classList.remove('active');
+            }
+        });
+
+        {% if is_admin %}
+        // --- Live search & filter (client-side, instant) ---
+        const adminSearch = document.getElementById('admin-search');
+        const adminStatus = document.getElementById('admin-status-filter');
+        const rows = document.querySelectorAll('.report-row');
+        const resultsCount = document.getElementById('results-count');
+
+        function liveFilter() {
+            const q = adminSearch.value.toLowerCase().trim();
+            const status = adminStatus.value;
+            let visible = 0;
+            rows.forEach(row => {
+                const matchText = !q || row.dataset.title.includes(q) || row.dataset.user.includes(q);
+                const matchStatus = !status || row.dataset.status === status;
+                const show = matchText && matchStatus;
+                row.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            resultsCount.textContent = visible + ' rapport' + (visible !== 1 ? 's' : '');
+        }
+
+        adminSearch.addEventListener('input', liveFilter);
+        adminStatus.addEventListener('change', liveFilter);
+        {% endif %}
+    </script>
+</body>
+</html>
