@@ -113,12 +113,13 @@ def extract_header(text: str) -> dict:
 def extract_resultats_pdf(page) -> list[dict]:
     """
     Extrait le tableau des résultats depuis une page pdfplumber.
-    Colonnes retenues : Essais | Résultat | Unités
-    Colonne ignorée   : Critère norme interne DICK
 
-    Détecte automatiquement la table RESULTATS via son en-tête
-    (contient "Essais" et "Résultat") et gère le décalage de colonne
-    si une colonne '#' est présente en position 0.
+    Gère deux formats de rapports :
+      - Format A : Essais | Méthode d'essai | Résultat | Unités
+      - Format B : Essais | Résultat | Unités
+
+    Pour le format B, methode_essai = "" (le PDF ne fournit pas l'info).
+    Colonne ignorée : Critère norme interne DICK.
     """
     rows = []
     tables = page.extract_tables()
@@ -130,6 +131,7 @@ def extract_resultats_pdf(page) -> list[dict]:
         # Chercher la ligne d'en-tête qui contient "Essais" et "Résultat"
         header_row = None
         col_offset = 0
+        methode_idx = None
         for row in table:
             if not row:
                 continue
@@ -140,13 +142,16 @@ def extract_resultats_pdf(page) -> list[dict]:
                 first_col = (row[0] or "").strip().lower()
                 if first_col in ("", "#", "n°"):
                     col_offset = 1
+                # Détecter si la colonne "Méthode d'essai" est présente
+                for i, cell in enumerate(row):
+                    if cell and "thode" in cell.lower():
+                        methode_idx = i
+                        break
                 break
 
-        # Si cette table n'a pas d'en-tête RESULTATS, on l'ignore
         if header_row is None:
             continue
 
-        # Extraire les lignes de données (après l'en-tête)
         found_header = False
         for row in table:
             if not row:
@@ -161,10 +166,23 @@ def extract_resultats_pdf(page) -> list[dict]:
             if not essai:
                 continue
 
-            resultat = (row[col_offset + 1] or "").strip() if len(row) > col_offset + 1 else ""
-            unite    = (row[col_offset + 2] or "").strip() if len(row) > col_offset + 2 else ""
+            if methode_idx is not None:
+                # Format A : Essais | Méthode | Résultat | Unités
+                methode_essai = (row[methode_idx] or "").strip() if len(row) > methode_idx else ""
+                resultat      = (row[methode_idx + 1] or "").strip() if len(row) > methode_idx + 1 else ""
+                unite         = (row[methode_idx + 2] or "").strip() if len(row) > methode_idx + 2 else ""
+            else:
+                # Format B : Essais | Résultat | Unités
+                methode_essai = ""
+                resultat      = (row[col_offset + 1] or "").strip() if len(row) > col_offset + 1 else ""
+                unite         = (row[col_offset + 2] or "").strip() if len(row) > col_offset + 2 else ""
 
-            rows.append({"essai": essai, "resultat": resultat, "unite": unite})
+            rows.append({
+                "essai": essai,
+                "methode_essai": methode_essai,
+                "resultat": resultat,
+                "unite": unite,
+            })
 
     return rows
 

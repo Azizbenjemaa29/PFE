@@ -42,6 +42,7 @@ def _run_extraction(report: Report) -> None:
             RapportResultat.objects.create(
                 header=header_obj,
                 essai=row['essai'],
+                methode_essai=row.get('methode_essai', ''),
                 resultat=row['resultat'],
                 unite=row['unite'],
             )

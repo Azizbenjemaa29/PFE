@@ -80,9 +80,10 @@ class RapportResultat(models.Model):
         verbose_name="Entête rapport"
     )
 
-    essai   = models.CharField(max_length=200, verbose_name="Essai")
-    resultat = models.CharField(max_length=200, verbose_name="Résultat")
-    unite   = models.CharField(max_length=100, blank=True, verbose_name="Unités")
+    essai        = models.CharField(max_length=200, verbose_name="Essai")
+    methode_essai = models.CharField(max_length=300, blank=True, verbose_name="Méthode d'essai")
+    resultat     = models.CharField(max_length=200, verbose_name="Résultat")
+    unite        = models.CharField(max_length=100, blank=True, verbose_name="Unités")
 
     class Meta:
         verbose_name = "Résultat"
