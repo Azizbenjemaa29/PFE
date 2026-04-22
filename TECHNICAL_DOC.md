@@ -538,4 +538,221 @@ DB_NAME=Projet_pfe
 
 ---
 
+## Updates from 2026-04-20
+
+This section captures technical insights, decisions, and code-level changes
+that emerged during the 2026-04-20 working session. Changes are grouped by
+subsystem. All line references are to files at this date.
+
+### 9.1 Date Extraction — Dual Format Support
+
+**Problem.** `extract_header()` only accepted `DD/MM/YYYY`; Format 2 PDFs
+using `DD-MM-YYYY` (e.g. `26-12-2024`) failed silently. Additional survey
+of real PDFs surfaced two more variants:
+- Singular `d'essai` label (vs. plural `d'essais`)
+- Missing colon after the date label (`Date d'émission 14-03-2025`)
+
+**Fix — [reports/extractor.py](reports/extractor.py).**
+
+```python
+def _parse_date(raw: str):
+    """Convertit DD/MM/YYYY, DD-MM-YYYY, DD/MM/YY ou DD-MM-YY en objet date."""
+    if not raw:
+        return None
+    raw = raw.strip().replace("-", "/")
+    for fmt in ("%d/%m/%Y", "%d/%m/%y"):
+        try:
+            return datetime.strptime(raw, fmt).date()
+        except ValueError:
+            continue
+    return None
+```
+
+All four date-field regexes now use `\d{2}[-/]\d{2}[-/]\d{4}`, with the
+colon optional (`\s*:?\s*`) and `d'essais?` accepting singular + plural:
+
+| Field              | Pattern (core) |
+|--------------------|----------------|
+| date_emission      | `Date\s+d.émission\s*:?\s*(\d{2}[-/]\d{2}[-/]\d{4})` |
+| date_prelevement   | `Date\s+du\s+prélèvement\s*:?\s*(\d{2}[-/]\d{2}[-/]\d{4})` |
+| date_reception     | `Date\s+de\s+réception\s*:?\s*(\d{2}[-/]\d{2}[-/]\d{4})` |
+| date_debut_essais  | `Date\s+du\s+début\s+d.essais?\s*:?\s*(\d{2}[-/]\d{2}[-/]\d{4})` |
+
+Verified across three representative PDFs (EL MAZRAA, SABA 14-03-2025,
+CEDRIA 20-10-2025).
+
+### 9.2 Responsable Laboratoire — Default Value
+
+Some rapports omit the `Responsable laboratoire` block. To avoid
+producing `RapportHeader.responsable_laboratoire=""` downstream, the
+extractor now falls back to `"HAZZI HASSEN"`.
+
+```python
+# reports/extractor.py:90-92
+responsable = _field(
+    r"Responsable\s+(?:du\s+)?laboratoire\s*\n?\s*([A-Z][A-Za-zÀ-ÿ\s]{3,30})", text
+) or "HAZZI HASSEN"
+```
+
+### 9.3 Méthode d'essai — New Column with Per-Format Handling
+
+**Design constraint.** Two report layouts coexist:
+
+| Format | Table columns |
+|--------|---------------|
+| **A**  | Essais \| Méthode d'essai \| Résultat \| Unités |
+| **B**  | Essais \| Résultat \| Unités |
+
+Before this session, `extract_resultats_pdf()` assumed Format B and
+silently shifted Format A columns (méthode was dropped, résultat went
+into the méthode slot).
+
+**Schema change.**
+
+```python
+# reports/models.py — RapportResultat
+essai         = models.CharField(max_length=200, verbose_name="Essai")
+methode_essai = models.CharField(max_length=300, blank=True,
+                                  verbose_name="Méthode d'essai")
+resultat      = models.CharField(max_length=200, verbose_name="Résultat")
+unite         = models.CharField(max_length=100, blank=True, verbose_name="Unités")
+```
+
+Migration: `reports/migrations/0007_rapportresultat_methode_essai.py`
+(applied to `Projet_pfe` on SQL Server — verified via
+`INFORMATION_SCHEMA.COLUMNS`: column exists as `nvarchar(300)`).
+
+**Extractor change — header detection.** The parser now inspects the
+header row of each candidate table for the literal `"thode"` substring
+(case-insensitive) to locate the méthode column. The offset from the
+méthode column is then used to read `resultat` and `unite`:
+
+```python
+# reports/extractor.py — inside extract_resultats_pdf()
+for i, cell in enumerate(row):
+    if cell and "thode" in cell.lower():
+        methode_idx = i
+        break
+```
+
+If `methode_idx is None` → Format B path (methode_essai="").
+If present → Format A path, columns read at offsets `+0/+1/+2` from
+the méthode index.
+
+**Design decision: no lookup fallback.** An earlier iteration used a
+hardcoded `METHODE_LOOKUP` dict to infer méthode from the essai name
+(e.g. `pH → Electrochimie`). Per user requirement this was **removed** —
+méthode is only populated when the PDF actually provides it. Rationale:
+lookup values risked being wrong for non-standard or newer methods;
+absence is more honest than a guessed default.
+
+**View wiring — [reports/views.py:_run_extraction](reports/views.py).**
+
+```python
+RapportResultat.objects.create(
+    header=header_obj,
+    essai=row['essai'],
+    methode_essai=row.get('methode_essai', ''),
+    resultat=row['resultat'],
+    unite=row['unite'],
+)
+```
+
+**SSMS caveat.** SQL Server Management Studio caches table schemas.
+After the migration, `SELECT TOP 1000 Rows` auto-generated queries may
+still reference the old column list. Right-click `Tables → Refresh` in
+Object Explorer (or write the SELECT manually including
+`[methode_essai]`) to see the new column.
+
+### 9.4 Media File Serving in Development
+
+**Problem.** Clicking a PDF link in the dashboard returned a Django
+404 page. `{{ report.file.url }}` produced `/reports/<filename>.pdf`
+which collided with the `reports/` app URLconf. `MEDIA_URL` /
+`MEDIA_ROOT` had never been defined.
+
+**Fix.**
+
+```python
+# config/settings.py
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR   # preserves existing upload_to='reports/' paths
+```
+
+```python
+# config/urls.py
+from django.conf import settings
+from django.conf.urls.static import static
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+`report.file.url` now yields `/media/reports/<filename>.pdf`. No files
+moved on disk; existing DB rows still resolve.
+
+**Production note.** The `DEBUG`-gated `static()` helper is dev-only.
+For production, serve `/media/` via the reverse proxy (nginx/IIS) or
+cloud storage (Azure Blob, S3) with the same URL prefix.
+
+### 9.5 Multi-File Batch Upload
+
+**Backend — [reports/views.py:upload_report](reports/views.py).** Now iterates
+`request.FILES.getlist('file')`. Each file goes through the same
+extension/size check before being turned into a `Report`. Exceptions
+during save or extraction are caught **per file**, so one bad upload
+doesn't abort the batch.
+
+```python
+# Constants declared at module scope
+MAX_UPLOAD_SIZE = 25 * 1024 * 1024   # 25 MB
+MAX_FILES_PER_BATCH = 10
+ALLOWED_EXTENSIONS = {'.pdf', '.png', '.jpg', '.jpeg', '.tiff'}
+```
+
+- **Title handling.** When >1 file is uploaded with a single title, the
+  filename is appended so each `Report.title` stays distinct
+  (`"Rapport Labo Mars — file1.pdf"`).
+- **Per-file feedback.** `django.contrib.messages` produces a success or
+  error alert per file, plus a batch-level summary (`N réussi(s),
+  M échec(s)`).
+
+**Frontend — [reports/templates/reports/dashboard.html](reports/templates/reports/dashboard.html).**
+
+- `<input type="file" name="file" multiple>` with `accept`
+- JS wraps file selection & drag-drop in a single `applyFiles()` helper
+  performing client-side validation (ext, 25 MB, 10-file cap). Selected
+  files render as a bullet list with per-file MB footprint.
+- Bootstrap alerts block added above the admin banner to surface
+  `messages.success / error / warning`.
+
+**Standalone page — [reports/templates/reports/upload.html](reports/templates/reports/upload.html).**
+Rewritten from `{% for field in form %}` boilerplate to an explicit form
+with multi-file input and a preview list. The `ReportForm` ModelForm is
+still used, but only for GET-side metadata; POST is handled directly
+(file list + title + `extract_now` flag).
+
+### 9.6 Repository & Git Hygiene
+
+- **.gitignore** added at repo root — ignores bytecode (`__pycache__/`,
+  `*.py[cod]`), virtualenv (`venv/`, `.venv/`), Django state
+  (`db.sqlite3`, `media/`, `staticfiles/`), env files, IDE metadata, and
+  client lab data (`reports/*.pdf`, `reports/*.jpg`, etc.). Lab reports
+  are **not** committed to git.
+- **Git identity** set at repo-local scope only (`git config --local`)
+  — not global.
+- **Outstanding TODO.** `SECRET_KEY` at [config/settings.py:24](config/settings.py#L24)
+  is the Django-generated `django-insecure-…` default. Move to an env
+  variable (and rotate) before any production deployment.
+
+### 9.7 Database Engine Reminder
+
+The project targets **Microsoft SQL Server** via `django-mssql-backend`
+(driver: `ODBC Driver 17 for SQL Server`). Any developer running
+migrations must have the driver installed and `Projet_pfe` reachable
+on `localhost:1433` with trusted connection. Migrations do not use
+SQLite — `db.sqlite3` is gitignored but has no functional role.
+
+---
+
 *Generated for LabAssistant v1.0 — Poulina Group Holding PFE Project — 2026*

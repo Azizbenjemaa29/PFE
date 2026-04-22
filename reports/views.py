@@ -60,7 +60,7 @@ def _run_extraction(report: Report) -> None:
 @login_required
 def dashboard(request):
     if request.user.role == 'admin':
-        reports = Report.objects.all().order_by('-uploaded_at')
+        reports = Report.objects.filter(is_deleted=False).order_by('-uploaded_at')
         completed_count = reports.filter(status='COMPLETED').count()
         pending_count = reports.filter(status='PENDING').count()
         refused_count = reports.filter(status='REFUSED').count()
@@ -87,7 +87,7 @@ def dashboard(request):
             'status_filter': status_filter,
         })
     else:
-        reports = Report.objects.filter(user=request.user).order_by('-uploaded_at')
+        reports = Report.objects.filter(user=request.user, is_deleted=False).order_by('-uploaded_at')
         completed_count = reports.filter(status='COMPLETED').count()
         pending_count = reports.filter(status='PENDING').count()
         refused_count = reports.filter(status='REFUSED').count()
@@ -169,9 +169,9 @@ def upload_report(request):
 @login_required
 def history(request):
     if request.user.role == 'admin':
-        reports = Report.objects.all().order_by('-uploaded_at')
+        reports = Report.objects.filter(is_deleted=False).order_by('-uploaded_at')
     else:
-        reports = Report.objects.filter(user=request.user).order_by('-uploaded_at')
+        reports = Report.objects.filter(user=request.user, is_deleted=False).order_by('-uploaded_at')
     return render(request, 'reports/history.html', {'reports': reports})
 
 @login_required
@@ -181,7 +181,16 @@ def delete_report(request, pk):
     else:
         report = get_object_or_404(Report, pk=pk, user=request.user)
     if request.method == 'POST':
-        report.delete()
+        try:
+            header = report.header
+            header.is_deleted = True
+            header.save(update_fields=['is_deleted'])
+            header.resultats.all().update(is_deleted=True)
+        except RapportHeader.DoesNotExist:
+            pass
+        # Soft delete : on garde le rapport dans la DB mais on le marque comme supprimé
+        report.is_deleted = True
+        report.save(update_fields=['is_deleted'])
         return redirect('reports:dashboard')
     return redirect('reports:dashboard')
 

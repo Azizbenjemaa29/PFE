@@ -25,6 +25,7 @@ class Report(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     processed_text = models.TextField(blank=True, null=True, verbose_name="Texte extrait")
+    is_deleted = models.BooleanField(default=False, verbose_name="Supprimé")
 
     def __str__(self):
         return f"{self.title} - {self.user.username}"
@@ -58,6 +59,7 @@ class RapportHeader(models.Model):
     date_reception          = models.DateField(null=True, blank=True, verbose_name="Date de réception")
     date_debut_essais       = models.DateField(null=True, blank=True, verbose_name="Date du début d'essais")
     responsable_laboratoire = models.CharField(max_length=200, blank=True, verbose_name="Responsable laboratoire")
+    is_deleted              = models.BooleanField(default=False, verbose_name="Supprimé")
 
     class Meta:
         verbose_name = "Entête rapport"
@@ -80,10 +82,11 @@ class RapportResultat(models.Model):
         verbose_name="Entête rapport"
     )
 
-    essai        = models.CharField(max_length=200, verbose_name="Essai")
+    essai         = models.CharField(max_length=200, verbose_name="Essai")
     methode_essai = models.CharField(max_length=300, blank=True, verbose_name="Méthode d'essai")
-    resultat     = models.CharField(max_length=200, verbose_name="Résultat")
-    unite        = models.CharField(max_length=100, blank=True, verbose_name="Unités")
+    resultat      = models.CharField(max_length=200, verbose_name="Résultat")
+    unite         = models.CharField(max_length=100, blank=True, verbose_name="Unités")
+    is_deleted    = models.BooleanField(default=False, verbose_name="Supprimé")
 
     class Meta:
         verbose_name = "Résultat"

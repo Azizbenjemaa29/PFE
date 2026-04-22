@@ -311,6 +311,53 @@
         }
 
         #ocr-progress { display: none; }
+
+        /* PDF VIEWER BUTTON */
+        .btn-view-pdf {
+            background: transparent;
+            border: 0;
+            color: var(--primary-light);
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all .2s;
+        }
+        .btn-view-pdf:hover {
+            background: #eef4fb;
+            color: var(--primary);
+        }
+        .btn-view-pdf i { font-size: 1rem; }
+
+        /* PDF MODAL */
+        #pdfViewerModal .modal-dialog {
+            max-width: 90vw;
+            height: 90vh;
+            margin: 3vh auto;
+        }
+        #pdfViewerModal .modal-content {
+            height: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        #pdfViewerModal .modal-header {
+            background: var(--primary);
+            color: white;
+            border-bottom: 0;
+        }
+        #pdfViewerModal .modal-header .btn-close {
+            filter: invert(1) brightness(2);
+        }
+        #pdfViewerModal .modal-body {
+            padding: 0;
+            background: #2b2b2b;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+        #pdfViewerFrame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+        }
     </style>
 </head>
 
@@ -618,6 +665,12 @@
                                 {% endif %}
                             </td>
                             <td class="text-end pe-3">
+                                <button type="button" class="btn-view-pdf" title="Voir le PDF"
+                                    data-pdf-url="{{ report.file.url }}"
+                                    data-pdf-name="{{ report.filename }}"
+                                    onclick="openPdfViewer(this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                                 {% if is_admin and report.status == 'PENDING' %}
                                 <form action="{% url 'reports:approve_report' report.pk %}" method="post" class="d-inline"
                                     onsubmit="return confirm('Approuver et lancer l\'extraction ?');">
@@ -695,7 +748,49 @@
         {% endif %}
     </div>
 
+    <!-- PDF VIEWER MODAL -->
+    <div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content d-flex flex-column">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfViewerModalLabel">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>
+                        <span id="pdfViewerFileName">Aperçu du rapport</span>
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="#" id="pdfViewerOpenNew" target="_blank" class="btn btn-sm"
+                            style="background:rgba(255,255,255,.15); color:white; border:none;" title="Ouvrir dans un nouvel onglet">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <iframe id="pdfViewerFrame" src="about:blank" title="Aperçu PDF"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function openPdfViewer(btn) {
+            const url = btn.getAttribute('data-pdf-url');
+            const name = btn.getAttribute('data-pdf-name') || 'Aperçu du rapport';
+            const frame = document.getElementById('pdfViewerFrame');
+            const title = document.getElementById('pdfViewerFileName');
+            const openNew = document.getElementById('pdfViewerOpenNew');
+            title.textContent = name;
+            openNew.href = url;
+            frame.src = url;
+            const modalEl = document.getElementById('pdfViewerModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+        document.getElementById('pdfViewerModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('pdfViewerFrame').src = 'about:blank';
+        });
+    </script>
     <script>
         {% if not is_admin %}
         const dropZone = document.getElementById('drop-zone');
