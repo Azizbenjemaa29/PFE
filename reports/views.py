@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.db.models import Q
+from django.http import FileResponse, Http404
+from django.views.decorators.clickjacking import xframe_options_exempt
 from .models import Report, RapportHeader, RapportResultat
 from .forms import ReportForm, ProfilForm
 from .extractor import extract_rapport
@@ -55,6 +57,20 @@ def _run_extraction(report: Report) -> None:
         report.status = 'FAILED'
         report.processed_text = f"Erreur extraction : {e}"
         report.save(update_fields=['processed_text', 'status'])
+
+
+@login_required
+@xframe_options_exempt
+def serve_pdf(request, pk):
+    report = get_object_or_404(Report, pk=pk)
+    if request.user.role != 'admin' and report.user != request.user:
+        raise Http404
+    try:
+        response = FileResponse(open(report.file.path, 'rb'), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{report.filename()}"'
+        return response
+    except FileNotFoundError:
+        raise Http404
 
 
 @login_required

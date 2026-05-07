@@ -666,7 +666,7 @@
                             </td>
                             <td class="text-end pe-3">
                                 <button type="button" class="btn-view-pdf" title="Voir le PDF"
-                                    data-pdf-url="{{ report.file.url }}"
+                                    data-pdf-url="{% url 'reports:serve_pdf' report.pk %}"
                                     data-pdf-name="{{ report.filename }}"
                                     onclick="openPdfViewer(this)">
                                     <i class="bi bi-eye"></i>

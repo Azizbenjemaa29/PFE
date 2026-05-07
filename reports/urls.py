@@ -14,5 +14,6 @@ urlpatterns = [
     path('refuse/<int:pk>/', views.refuse_report, name='refuse_report'),
     path('users/', views.manage_users, name='manage_users'),
     path('profil/', views.profil, name='profil'),
+    path('pdf/<int:pk>/', views.serve_pdf, name='serve_pdf'),
 ]
 
