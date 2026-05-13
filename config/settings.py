@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,8 +43,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'blog',
     'reports',
-    
+    'chatbot',
 ]
+
+# ── Mistral AI ──
+MISTRAL_API_KEY = os.environ.get('MISTRAL_API_KEY', '')
+MISTRAL_MODEL   = os.environ.get('MISTRAL_MODEL', 'mistral-large-latest')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
