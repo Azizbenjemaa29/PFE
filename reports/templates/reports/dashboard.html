@@ -1,917 +1,488 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="fr">
+{% extends 'reports/base_dashboard.html' %}
+{% load static i18n %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de Bord - LabAssistant</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #1a4f7a;
-            --primary-light: #2a6496;
-            --accent: #c9a227;
-            --sidebar-width: 230px;
-            --right-sidebar-width: 300px;
-            --topbar-height: 60px;
-            --bg: #f0f4f8;
-            --card-bg: #ffffff;
-            --text-muted: #6c757d;
-        }
+{% block title %}{% if is_admin %}{% trans "Tableau de Bord Admin" %}{% else %}{% trans "Mes Rapports" %}{% endif %}{% endblock %}
 
-        * { box-sizing: border-box; }
+{% block has_right_sidebar %}{% endblock %}
 
-        body {
-            background: var(--bg);
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
+{% block extra_css %}
+.chart-wrapper {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
-        /* TOP BAR */
-        .topbar {
-            height: var(--topbar-height);
-            background: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            color: white;
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgba(0,0,0,.3);
-        }
+.chart-wrapper h6 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 12px;
+    align-self: flex-start;
+}
 
-        .topbar .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+}
 
-        .topbar .brand img { height: 36px; }
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
 
-        .topbar .user-info {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
+.legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 
-        .topbar .avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--accent);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
+.filter-bar {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    border: 1px solid var(--border);
+}
+{% endblock %}
 
-        /* LEFT SIDEBAR */
-        .left-sidebar {
-            width: var(--sidebar-width);
-            background: #fff;
-            position: fixed;
-            top: var(--topbar-height);
-            bottom: 0; left: 0;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid #e0e7ef;
-            z-index: 90;
-        }
+{% block content %}
 
-        .left-sidebar .nav-section-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.1em;
-            padding: 18px 20px 6px;
-        }
-
-        .left-sidebar .nav-item a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 20px;
-            color: #333;
-            text-decoration: none;
-            border-left: 3px solid transparent;
-            font-size: 0.92rem;
-            transition: all .2s;
-        }
-
-        .left-sidebar .nav-item a:hover,
-        .left-sidebar .nav-item a.active {
-            background: #f0f4f8;
-            border-left-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .left-sidebar .nav-item a i { font-size: 1rem; }
-
-        .left-sidebar .sidebar-bottom {
-            margin-top: auto;
-            padding: 16px;
-            border-top: 1px solid #e0e7ef;
-        }
-
-        /* MAIN CONTENT */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            margin-right: var(--right-sidebar-width);
-            margin-top: var(--topbar-height);
-            padding: 28px;
-            overflow-y: auto;
-            height: calc(100vh - var(--topbar-height));
-        }
-
-        /* RIGHT SIDEBAR */
-        .right-sidebar {
-            width: var(--right-sidebar-width);
-            background: #fff;
-            position: fixed;
-            top: var(--topbar-height);
-            bottom: 0; right: 0;
-            overflow-y: auto;
-            border-left: 1px solid #e0e7ef;
-            padding: 20px;
-        }
-
-        .right-sidebar h6 {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #e0e7ef;
-        }
-
-        /* OCR UPLOAD CARD */
-        .ocr-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 28px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.07);
-            margin-bottom: 24px;
-        }
-
-        .ocr-card h5 {
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 6px;
-        }
-
-        .drop-zone {
-            border: 2px dashed #c0cfde;
-            border-radius: 10px;
-            padding: 50px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all .25s;
-            background: #f8fafc;
-        }
-
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--primary);
-            background: #eef4fb;
-        }
-
-        .drop-zone .upload-icon {
-            font-size: 3rem;
-            color: var(--primary-light);
-            margin-bottom: 12px;
-        }
-
-        .drop-zone p {
-            color: var(--text-muted);
-            margin: 0;
-            font-size: 0.9rem;
-        }
-
-        .drop-zone .file-name {
-            font-weight: 600;
-            color: var(--primary);
-            margin-top: 6px;
-            font-size: 0.95rem;
-        }
-
-        /* STATS CARDS */
-        .stat-card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 18px 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.06);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .stat-card .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-        }
-
-        .stat-card .stat-num {
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .stat-card .stat-label {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-        }
-
-        /* ACTIVITY FEED */
-        .activity-item {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 18px;
-            font-size: 0.85rem;
-        }
-
-        .activity-item .act-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 0.9rem;
-        }
-
-        .activity-item .act-body .act-title {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .activity-item .act-body .act-time {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        /* STATUS BADGES */
-        .badge-pending   { background:#fff3cd; color:#856404; }
-        .badge-completed { background:#d1e7dd; color:#0a5c36; }
-        .badge-processing{ background:#cfe2ff; color:#084298; }
-        .badge-failed    { background:#f8d7da; color:#842029; }
-        .badge-refused   { background:#e2e3e5; color:#41464b; }
-
-        /* REPORTS TABLE */
-        .reports-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.07);
-            overflow: hidden;
-        }
-
-        .reports-card .card-header-custom {
-            padding: 16px 20px;
-            border-bottom: 1px solid #e0e7ef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .reports-card table th {
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            font-weight: 600;
-            background: #f8fafc;
-        }
-
-        /* Admin banner */
-        .admin-banner {
-            background: linear-gradient(135deg, #1a4f7a, #2a6496);
-            color: white;
-            border-radius: 12px;
-            padding: 16px 24px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        #ocr-progress { display: none; }
-
-        /* PDF VIEWER BUTTON */
-        .btn-view-pdf {
-            background: transparent;
-            border: 0;
-            color: var(--primary-light);
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: all .2s;
-        }
-        .btn-view-pdf:hover {
-            background: #eef4fb;
-            color: var(--primary);
-        }
-        .btn-view-pdf i { font-size: 1rem; }
-
-        /* PDF MODAL */
-        #pdfViewerModal .modal-dialog {
-            max-width: 90vw;
-            height: 90vh;
-            margin: 3vh auto;
-        }
-        #pdfViewerModal .modal-content {
-            height: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        #pdfViewerModal .modal-header {
-            background: var(--primary);
-            color: white;
-            border-bottom: 0;
-        }
-        #pdfViewerModal .modal-header .btn-close {
-            filter: invert(1) brightness(2);
-        }
-        #pdfViewerModal .modal-body {
-            padding: 0;
-            background: #2b2b2b;
-            flex: 1 1 auto;
-            min-height: 0;
-        }
-        #pdfViewerFrame {
-            width: 100%;
-            height: 100%;
-            border: 0;
-            display: block;
-        }
-    </style>
-</head>
-
-<body>
-
-    <!-- TOP BAR -->
-    <div class="topbar">
-        <div class="brand">
-            <img src="{% static 'reports/images/logo.png' %}" alt="Poulina">
-            LabAssistant
-        </div>
-        <div class="user-info">
-            <span style="font-size:.85rem; opacity:.85;">
-                <i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i>
-                Bonjour, <strong>{{ user.username }}</strong>
-                {% if is_admin %}
-                <span class="badge ms-2" style="background:var(--accent); color:#333; font-size:0.7rem;">
-                    <i class="bi bi-shield-lock me-1"></i>Admin
-                </span>
-                {% endif %}
-            </span>
-            <div class="avatar">{{ user.username|first|upper }}</div>
-            {% if user.is_staff %}
-            <a href="/admin/" class="btn btn-sm" style="background:rgba(255,255,255,.15); color:white; border:none;">
-                <i class="bi bi-shield-lock"></i> Admin
-            </a>
-            {% endif %}
-            <form action="{% url 'logout' %}" method="post" class="m-0">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm" style="background:rgba(255,255,255,.15); color:white; border:none;">
-                    <i class="bi bi-box-arrow-right"></i>
-                </button>
-            </form>
-        </div>
+{% if is_admin %}
+<div class="admin-banner">
+    <i class="bi bi-shield-lock" style="font-size:1.4rem;"></i>
+    <div>
+        <div style="font-weight:700; font-size:.95rem;">{% trans "Mode Administrateur" %}</div>
+        <div style="font-size:0.8rem; opacity:.85;">{% trans "Vous visualisez tous les rapports de tous les utilisateurs." %}</div>
     </div>
+</div>
+{% endif %}
 
-    <!-- LEFT SIDEBAR -->
-    <div class="left-sidebar">
-        <div class="nav-section-label">Navigation</div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a href="{% url 'reports:dashboard' %}" class="active">
-                    <i class="bi bi-file-earmark-medical"></i>
-                    {% if is_admin %}Tous les Rapports{% else %}Mes Rapports{% endif %}
-                </a>
-            </li>
-            {% if not is_admin %}
-            <li class="nav-item">
-                <a href="{% url 'reports:upload_report' %}">
-                    <i class="bi bi-cloud-upload"></i> Nouveau rapport
-                </a>
-            </li>
-            {% endif %}
-            <li class="nav-item">
-                <a href="{% url 'reports:history' %}" id="toggle-history">
-                    <i class="bi bi-clock-history"></i> Historique
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{% url 'chatbot:chat' %}">
-                    <i class="bi bi-cpu-fill"></i> LabAssistant IA
-                </a>
-            </li>
-        </ul>
+<!-- SECTION TITLE -->
+<div class="section-title">
+    <i class="bi bi-grid-1x2"></i>
+    {% if is_admin %}{% trans "Tableau de Bord Admin" %}{% else %}{% trans "Mes Rapports" %}{% endif %}
+</div>
 
-        {% if is_admin %}
-        <div class="nav-section-label">Administration</div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a href="{% url 'reports:manage_users' %}">
-                    <i class="bi bi-people"></i> Gestion Users
-                </a>
-            </li>
-        </ul>
-        {% endif %}
-
-        <div class="nav-section-label">Paramètres</div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a href="{% url 'reports:profil' %}">
-                    <i class="bi bi-person"></i> Mon profil
-                </a>
-            </li>
-        </ul>
-
-        <div class="sidebar-bottom">
-            <div style="font-size:.75rem; color:var(--text-muted);">
-                <img src="{% static 'reports/images/logo.png' %}" alt="" style="height:20px; margin-bottom:4px;"><br>
-                © 2026 Poulina Group
+<!-- STATS + CHART ROW -->
+<div class="row g-3 mb-4">
+    <!-- Donut Chart -->
+    <div class="col-lg-4 col-md-5">
+        <div class="chart-wrapper h-100">
+            <h6><i class="bi bi-pie-chart me-1"></i>{% trans "Répartition des rapports" %}</h6>
+            <div style="position:relative; width:200px; height:200px; flex-shrink:0;">
+                <!-- Donut ring: filled via JS conic-gradient, no CDN needed -->
+                <div id="donutRing" style="width:200px; height:200px; border-radius:50%; background:var(--border);"></div>
+                <!-- Hole -->
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:140px; height:140px; border-radius:50%; background:var(--card-bg);"></div>
+                <!-- Center text -->
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; z-index:2;">
+                    <div style="font-size:1.8rem; font-weight:700; color:var(--text);">{{ reports|length }}</div>
+                    <div style="font-size:0.7rem; color:var(--text-muted);">{% trans "Total" %}</div>
+                </div>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#26735B;"></div> {% trans "Terminés" %} ({{ completed_count }})</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> {% trans "En cours" %} ({{ processing_count }})</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> {% trans "En attente" %} ({{ pending_count }})</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> {% trans "Refusés/Échec" %} ({{ refused_count }})</div>
             </div>
         </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-
-        {% if messages %}
-        <div class="mb-3">
-            {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show py-2" role="alert" style="font-size:.85rem;">
-                {{ message }}
-                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Admin Banner -->
-        {% if is_admin %}
-        <div class="admin-banner">
-            <i class="bi bi-shield-lock" style="font-size:1.5rem;"></i>
-            <div>
-                <div style="font-weight:700; font-size:1rem;">Mode Administrateur</div>
-                <div style="font-size:0.82rem; opacity:.85;">Vous visualisez tous les rapports de tous les utilisateurs.</div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Stats -->
-        <h5 style="font-weight:700; font-size:1rem; color:var(--primary);">
-            <i class="bi bi-file-earmark-medical me-2"></i>
-            {% if is_admin %}Tableau de Bord Admin{% else %}Mes Rapports{% endif %}
-        </h5>
-
-        <div class="row g-3 mb-4">
-            <div class="{% if is_admin %}col-md-3{% else %}col-md-4{% endif %}">
+    <!-- Stat Cards -->
+    <div class="col-lg-8 col-md-7">
+        <div class="row g-3 h-100">
+            <div class="col-6">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background:#e8f0fe;">
-                        <i class="bi bi-file-earmark-text" style="color:#1a4f7a;"></i>
+                    <div class="stat-icon" style="background:rgba(38,115,91,0.12);">
+                        <i class="bi bi-file-earmark-text" style="color:var(--primary);"></i>
                     </div>
                     <div>
                         <div class="stat-num">{{ reports|length }}</div>
-                        <div class="stat-label">Rapports au total</div>
+                        <div class="stat-label">{% trans "Rapports au total" %}</div>
                     </div>
                 </div>
             </div>
-            <div class="{% if is_admin %}col-md-3{% else %}col-md-4{% endif %}">
+            <div class="col-6">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background:#d1e7dd;">
-                        <i class="bi bi-check-circle" style="color:#0a5c36;"></i>
+                    <div class="stat-icon" style="background:rgba(16,185,129,0.12);">
+                        <i class="bi bi-check-circle" style="color:#10b981;"></i>
                     </div>
                     <div>
                         <div class="stat-num">{{ completed_count }}</div>
-                        <div class="stat-label">Traitement terminé</div>
+                        <div class="stat-label">{% trans "Traitement terminé" %}</div>
                     </div>
                 </div>
             </div>
-            <div class="{% if is_admin %}col-md-3{% else %}col-md-4{% endif %}">
+            <div class="col-6">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background:#fff3cd;">
-                        <i class="bi bi-hourglass-split" style="color:#856404;"></i>
+                    <div class="stat-icon" style="background:rgba(245,158,11,0.12);">
+                        <i class="bi bi-hourglass-split" style="color:#f59e0b;"></i>
                     </div>
                     <div>
                         <div class="stat-num">{{ pending_count }}</div>
-                        <div class="stat-label">En attente</div>
+                        <div class="stat-label">{% trans "En attente" %}</div>
                     </div>
                 </div>
             </div>
-            {% if is_admin %}
-            <div class="col-md-3">
+            <div class="col-6">
+                {% if is_admin %}
                 <div class="stat-card">
-                    <div class="stat-icon" style="background:#f3e8ff;">
-                        <i class="bi bi-people" style="color:#6f42c1;"></i>
+                    <div class="stat-icon" style="background:rgba(139,92,246,0.12);">
+                        <i class="bi bi-people" style="color:#8b5cf6;"></i>
                     </div>
                     <div>
                         <div class="stat-num">{{ users_count }}</div>
-                        <div class="stat-label">Utilisateurs</div>
+                        <div class="stat-label">{% trans "Utilisateurs" %}</div>
                     </div>
+                </div>
+                {% else %}
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(59,130,246,0.12);">
+                        <i class="bi bi-arrow-repeat" style="color:#3b82f6;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ processing_count }}</div>
+                        <div class="stat-label">{% trans "En traitement" %}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- UPLOAD SECTION (utilisateur seulement) -->
+{% if not is_admin %}
+<div class="ocr-card">
+    <h5 style="font-weight:700; color:var(--primary); font-size:.95rem; margin-bottom:5px;">
+        <i class="bi bi-file-earmark-arrow-up me-2"></i>{% trans "Extraction PDF" %}
+    </h5>
+    <p style="color:var(--text-muted); font-size:.82rem; margin-bottom:18px;">
+        {% trans "Téléchargez un rapport PDF natif pour extraire automatiquement les données." %}
+    </p>
+    <form method="post" action="{% url 'reports:upload_report' %}" enctype="multipart/form-data" id="ocr-form">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="upload-icon"><i class="bi bi-file-earmark-pdf"></i></div>
+                    <p><strong>{% trans "Cliquez ou glissez-déposez" %}</strong> {% trans "vos fichiers ici" %}</p>
+                    <p style="margin-top:4px;"><small>{% trans "PDF natif uniquement — max. 25 MB / fichier — 10 fichiers max" %}</small></p>
+                    <div class="file-list-preview" id="file-label" style="display:none;"></div>
+                    <input type="file" name="file" id="file-input" accept=".pdf"
+                        style="display:none;" multiple required>
                 </div>
             </div>
-            {% endif %}
-        </div>
-
-        <!-- OCR Upload Section (user seulement) -->
-        {% if not is_admin %}
-        <div class="ocr-card">
-            <h5><i class="bi bi-magic me-2"></i>Extraction OCR</h5>
-            <p class="text-muted small mb-4">Téléchargez un rapport PDF ou image pour extraire automatiquement le texte.</p>
-            <form method="post" action="{% url 'reports:upload_report' %}" enctype="multipart/form-data" id="ocr-form">
-                {% csrf_token %}
-                <div class="row g-3">
-                    <div class="col-md-8">
-                        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-                            <div class="upload-icon"><i class="bi bi-cloud-arrow-up"></i></div>
-                            <p><strong>Cliquez ou glissez-déposez</strong> vos fichiers ici</p>
-                            <p>PDF, PNG, JPG, TIFF — max. 25 MB / fichier — 10 fichiers max</p>
-                            <div class="file-name" id="file-label" style="display:none;"></div>
-                            <input type="file" name="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff"
-                                style="display:none;" multiple required>
-                        </div>
+            <div class="col-md-4 d-flex flex-column gap-2">
+                <label class="form-label">{% trans "Titre du rapport" %}</label>
+                <input type="text" name="title" class="form-control" placeholder="{% trans 'ex: Rapport Labo Mars' %}" required>
+                <div id="ocr-progress" style="display:none;" class="mt-1">
+                    <div class="d-flex justify-content-between mb-1" style="font-size:.78rem; color:var(--text-muted);">
+                        <span>{% trans "Traitement…" %}</span>
+                        <span id="progress-pct">0%</span>
                     </div>
-                    <div class="col-md-4 d-flex flex-column gap-2">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Titre du rapport</label>
-                        <input type="text" name="title" class="form-control" placeholder="ex: Rapport Labo Mars" required>
-                        <div id="ocr-progress" class="mt-2">
-                            <div class="d-flex justify-content-between mb-1" style="font-size:.8rem;">
-                                <span>Traitement en cours…</span>
-                                <span id="progress-pct">0%</span>
-                            </div>
-                            <div class="progress" style="height:6px;">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
-                                    id="progress-bar" style="width:0%"></div>
-                            </div>
-                        </div>
-                        <div class="form-check form-switch mt-2">
-                            <input class="form-check-input" type="checkbox" id="extract-toggle" name="extract_now" value="1" checked>
-                            <label class="form-check-label" for="extract-toggle" style="font-size:.82rem;">
-                                Extraction automatique
-                            </label>
-                        </div>
-                        <small class="text-muted" id="extract-hint" style="font-size:.75rem;">
-                            Le rapport sera traité immédiatement.
-                        </small>
-                        <button type="submit" class="btn mt-auto" id="submit-btn" style="background:var(--primary); color:white;">
-                            <i class="bi bi-cpu me-1"></i> Lancer l'extraction
-                        </button>
+                    <div class="progress" style="height:5px; border-radius:10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                            id="progress-bar" style="width:0%; background:var(--primary);"></div>
                     </div>
                 </div>
-            </form>
-        </div>
-        {% endif %}
-
-        <!-- Admin Filter Bar -->
-        {% if is_admin %}
-        <div class="ocr-card" style="padding:16px 20px;">
-            <form method="get" action="{% url 'reports:dashboard' %}" id="admin-filter-form" class="d-flex align-items-center gap-3 flex-wrap">
-                <i class="bi bi-search text-muted"></i>
-                <input type="text" name="q" id="admin-search" class="form-control form-control-sm"
-                    style="max-width:320px;" placeholder="Rechercher par titre ou utilisateur…"
-                    value="{{ search_query|default:'' }}">
-                <select name="status" id="admin-status-filter" class="form-select form-select-sm" style="max-width:180px;">
-                    <option value="">Tous les statuts</option>
-                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>En attente</option>
-                    <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Terminé</option>
-                    <option value="REFUSED" {% if status_filter == 'REFUSED' %}selected{% endif %}>Refusé</option>
-                    <option value="PROCESSING" {% if status_filter == 'PROCESSING' %}selected{% endif %}>Traitement</option>
-                    <option value="FAILED" {% if status_filter == 'FAILED' %}selected{% endif %}>Échec</option>
-                </select>
-                <button type="submit" class="btn btn-sm" style="background:var(--primary); color:white;">
-                    <i class="bi bi-funnel me-1"></i>Filtrer
+                <div class="form-check form-switch mt-1">
+                    <input class="form-check-input" type="checkbox" id="extract-toggle" name="extract_now" value="1" checked>
+                    <label class="form-check-label" for="extract-toggle" style="font-size:.8rem;">
+                        {% trans "Extraction automatique" %}
+                    </label>
+                </div>
+                <small class="text-muted" id="extract-hint" style="font-size:.72rem;">
+                    {% trans "Le rapport sera traité immédiatement." %}
+                </small>
+                <button type="submit" class="btn btn-primary-custom mt-auto" id="submit-btn">
+                    <i class="bi bi-cpu me-1"></i> {% trans "Lancer l'extraction" %}
                 </button>
-                <a href="{% url 'reports:dashboard' %}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i>Réinitialiser
-                </a>
-                <span class="ms-auto text-muted" style="font-size:.82rem;" id="results-count">
-                    {{ reports|length }} rapport{{ reports|length|pluralize:"s" }}
-                </span>
-            </form>
+            </div>
         </div>
-        {% endif %}
+    </form>
+</div>
+{% endif %}
 
-        <!-- Reports Table -->
-        <div class="reports-card">
-            <div class="card-header-custom">
-                <strong style="font-size:.95rem;">
-                    {% if is_admin %}Tous les Rapports{% else %}Mes Rapports{% endif %}
-                </strong>
-                {% if not is_admin %}
-                <a href="{% url 'reports:upload_report' %}" class="btn btn-sm" style="background:var(--primary); color:white;">
-                    <i class="bi bi-plus"></i> Nouveau
-                </a>
-                {% endif %}
-            </div>
-            {% if reports %}
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th class="ps-3">Titre</th>
-                            {% if is_admin %}<th>Utilisateur</th>{% endif %}
-                            <th>Fichier</th>
-                            <th>Date</th>
-                            <th>Statut</th>
-                            <th class="text-end pe-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for report in reports %}
-                        <tr class="report-row" data-title="{{ report.title|lower }}" data-user="{{ report.user.nom|lower }}" data-status="{{ report.status }}">
-                            <td class="ps-3 fw-semibold">{{ report.title }}</td>
-                            {% if is_admin %}
-                            <td>
-                                <span class="badge bg-light text-dark border">
-                                    <i class="bi bi-person me-1"></i>{{ report.user.nom }}
-                                </span>
-                            </td>
-                            {% endif %}
-                            <td>
-                                <a href="{{ report.file.url }}" target="_blank" class="text-decoration-none">
-                                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ report.filename }}
-                                </a>
-                            </td>
-                            <td class="text-muted" style="font-size:.85rem;">{{ report.uploaded_at|date:"d/m/Y H:i" }}</td>
-                            <td>
-                                {% if report.status == 'PENDING' %}
-                                <span class="badge badge-pending rounded-pill px-3">En attente</span>
-                                {% elif report.status == 'PROCESSING' %}
-                                <span class="badge badge-processing rounded-pill px-3">Traitement</span>
-                                {% elif report.status == 'COMPLETED' %}
-                                <span class="badge badge-completed rounded-pill px-3">Terminé</span>
-                                {% elif report.status == 'REFUSED' %}
-                                <span class="badge badge-refused rounded-pill px-3">Refusé</span>
-                                {% else %}
-                                <span class="badge badge-failed rounded-pill px-3">Échec</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end pe-3">
-                                <button type="button" class="btn-view-pdf" title="Voir le PDF"
-                                    data-pdf-url="{% url 'reports:serve_pdf' report.pk %}"
-                                    data-pdf-name="{{ report.filename }}"
-                                    onclick="openPdfViewer(this)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                {% if is_admin and report.status == 'PENDING' %}
-                                <form action="{% url 'reports:approve_report' report.pk %}" method="post" class="d-inline"
-                                    onsubmit="return confirm('Approuver et lancer l\'extraction ?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-success border-0" title="Approuver">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                </form>
-                                <form action="{% url 'reports:refuse_report' report.pk %}" method="post" class="d-inline"
-                                    onsubmit="return confirm('Refuser ce rapport ?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Refuser">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
-                                <form action="{% url 'reports:delete_report' report.pk %}" method="post" class="d-inline"
-                                    onsubmit="return confirm('Voulez-vous vraiment supprimer ce rapport ?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Supprimer">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-inbox" style="font-size:2.5rem; opacity:.4;"></i>
-                <p class="mt-2">Aucun rapport pour l'instant.</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
+<!-- ADMIN FILTER BAR -->
+{% if is_admin %}
+<div class="filter-bar">
+    <i class="bi bi-search" style="color:var(--text-muted);"></i>
+    <input type="text" id="admin-search" class="form-control form-control-sm"
+        style="max-width:280px;" placeholder="{% trans 'Titre ou utilisateur…' %}"
+        value="{{ search_query|default:'' }}">
+    <select id="admin-status-filter" class="form-select form-select-sm" style="max-width:160px;">
+        <option value="">{% trans "Tous les statuts" %}</option>
+        <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>{% trans "En attente" %}</option>
+        <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>{% trans "Terminé" %}</option>
+        <option value="REFUSED" {% if status_filter == 'REFUSED' %}selected{% endif %}>{% trans "Refusé" %}</option>
+        <option value="PROCESSING" {% if status_filter == 'PROCESSING' %}selected{% endif %}>{% trans "Traitement" %}</option>
+        <option value="FAILED" {% if status_filter == 'FAILED' %}selected{% endif %}>{% trans "Échec" %}</option>
+    </select>
+    <button type="button" class="btn btn-primary-custom btn-sm" onclick="liveFilter()">
+        <i class="bi bi-funnel me-1"></i>{% trans "Filtrer" %}
+    </button>
+    <a href="{% url 'reports:dashboard' %}" class="btn btn-outline-custom btn-sm">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>{% trans "Réinitialiser" %}
+    </a>
+    <span class="ms-auto" style="font-size:.78rem; color:var(--text-muted);" id="results-count">
+        {{ reports|length }} rapport{{ reports|length|pluralize:"s" }}
+    </span>
+</div>
+{% endif %}
 
-    <!-- RIGHT SIDEBAR -->
-    <div class="right-sidebar" id="right-sidebar">
-        <h6><i class="bi bi-clock-history me-2"></i>Historique des activités</h6>
-        {% if reports %}
-        {% for report in reports|slice:":10" %}
-        <div class="activity-item">
-            <div class="act-icon
-                {% if report.status == 'COMPLETED' %}bg-success bg-opacity-10 text-success
-                {% elif report.status == 'PROCESSING' %}bg-primary bg-opacity-10 text-primary
-                {% elif report.status == 'FAILED' %}bg-danger bg-opacity-10 text-danger
-                {% elif report.status == 'REFUSED' %}bg-dark bg-opacity-10 text-dark
-                {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
-                {% if report.status == 'COMPLETED' %}<i class="bi bi-check-lg"></i>
-                {% elif report.status == 'PROCESSING' %}<i class="bi bi-arrow-repeat"></i>
-                {% elif report.status == 'FAILED' %}<i class="bi bi-x-lg"></i>
-                {% elif report.status == 'REFUSED' %}<i class="bi bi-slash-circle"></i>
-                {% else %}<i class="bi bi-hourglass"></i>{% endif %}
-            </div>
-            <div class="act-body">
-                <div class="act-title">{{ report.title|truncatechars:28 }}</div>
-                {% if is_admin %}
-                <div class="act-time" style="color:var(--primary); font-size:0.75rem;">
-                    <i class="bi bi-person me-1"></i>{{ report.user.nom }}
-                </div>
-                {% endif %}
-                <div class="act-time">
-                    <i class="bi bi-clock me-1"></i>{{ report.uploaded_at|timesince }} ago
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-        {% else %}
-        <div class="text-center text-muted py-4" style="font-size:.85rem;">
-            <i class="bi bi-calendar-x" style="font-size:2rem; opacity:.4;"></i>
-            <p class="mt-2">Aucune activité récente.</p>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- PDF VIEWER MODAL -->
-    <div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content d-flex flex-column">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="pdfViewerModalLabel">
-                        <i class="bi bi-file-earmark-pdf me-2"></i>
-                        <span id="pdfViewerFileName">Aperçu du rapport</span>
-                    </h5>
-                    <div class="d-flex align-items-center gap-2">
-                        <a href="#" id="pdfViewerOpenNew" target="_blank" class="btn btn-sm"
-                            style="background:rgba(255,255,255,.15); color:white; border:none;" title="Ouvrir dans un nouvel onglet">
-                            <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                    </div>
-                </div>
-                <div class="modal-body">
-                    <iframe id="pdfViewerFrame" src="about:blank" title="Aperçu PDF"></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function openPdfViewer(btn) {
-            const url = btn.getAttribute('data-pdf-url');
-            const name = btn.getAttribute('data-pdf-name') || 'Aperçu du rapport';
-            const frame = document.getElementById('pdfViewerFrame');
-            const title = document.getElementById('pdfViewerFileName');
-            const openNew = document.getElementById('pdfViewerOpenNew');
-            title.textContent = name;
-            openNew.href = url;
-            frame.src = url;
-            const modalEl = document.getElementById('pdfViewerModal');
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
-        document.getElementById('pdfViewerModal').addEventListener('hidden.bs.modal', () => {
-            document.getElementById('pdfViewerFrame').src = 'about:blank';
-        });
-    </script>
-    <script>
+<!-- REPORTS TABLE -->
+<div class="reports-card">
+    <div class="card-header-bar">
+        <strong style="font-size:.9rem; color:var(--text);">
+            <i class="bi bi-table me-2" style="color:var(--primary);"></i>
+            {% if is_admin %}{% trans "Tous les Rapports" %}{% else %}{% trans "Mes Rapports" %}{% endif %}
+        </strong>
         {% if not is_admin %}
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const fileLabel = document.getElementById('file-label');
+        <a href="{% url 'reports:upload_report' %}" class="btn btn-primary-custom btn-sm">
+            <i class="bi bi-plus"></i> {% trans "Nouveau" %}
+        </a>
+        {% endif %}
+    </div>
 
-        const MAX_FILES = 10;
-        const MAX_SIZE = 25 * 1024 * 1024;
-        const ALLOWED = ['.pdf', '.png', '.jpg', '.jpeg', '.tiff'];
+    {% if reports %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-3">{% trans "Titre" %}</th>
+                    {% if is_admin %}<th>{% trans "Utilisateur" %}</th>{% endif %}
+                    <th>{% trans "Fichier" %}</th>
+                    <th>{% trans "Date" %}</th>
+                    <th>{% trans "Statut" %}</th>
+                    <th class="text-end pe-3">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr class="report-row" data-title="{{ report.title|lower }}" data-user="{{ report.user.nom|lower }}" data-status="{{ report.status }}">
+                    <td class="ps-3 fw-semibold" style="color:var(--text);">{{ report.title }}</td>
+                    {% if is_admin %}
+                    <td>
+                        <span class="badge bg-light border" style="color:var(--text);">
+                            <i class="bi bi-person me-1"></i>{{ report.user.nom }}
+                        </span>
+                    </td>
+                    {% endif %}
+                    <td>
+                        <a href="{{ report.file.url }}" target="_blank" class="text-decoration-none" style="color:var(--text-muted);">
+                            <i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ report.filename }}
+                        </a>
+                    </td>
+                    <td style="color:var(--text-muted); font-size:.82rem;">{{ report.uploaded_at|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if report.status == 'PENDING' %}
+                        <span class="badge badge-pending rounded-pill px-3">{% trans "En attente" %}</span>
+                        {% elif report.status == 'PROCESSING' %}
+                        <span class="badge badge-processing rounded-pill px-3">{% trans "Traitement" %}</span>
+                        {% elif report.status == 'COMPLETED' %}
+                        <span class="badge badge-completed rounded-pill px-3">{% trans "Terminé" %}</span>
+                        {% elif report.status == 'REFUSED' %}
+                        <span class="badge badge-refused rounded-pill px-3">{% trans "Refusé" %}</span>
+                        {% else %}
+                        <span class="badge badge-failed rounded-pill px-3">{% trans "Échec" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <button type="button" class="btn-view-pdf" title="{% trans 'Voir le PDF' %}"
+                            data-pdf-url="{% url 'reports:serve_pdf' report.pk %}"
+                            data-pdf-name="{{ report.filename }}"
+                            onclick="openPdfViewer(this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        {% if is_admin and report.status == 'PENDING' %}
+                        <form action="{% url 'reports:approve_report' report.pk %}" method="post" class="d-inline"
+                            onsubmit="return confirm('{% trans "Approuver et lancer l\'extraction ?" %}');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-success border-0" title="{% trans 'Approuver' %}">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                        </form>
+                        <form action="{% url 'reports:refuse_report' report.pk %}" method="post" class="d-inline"
+                            onsubmit="return confirm('{% trans "Refuser ce rapport ?" %}');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-warning border-0" title="{% trans 'Refuser' %}">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                        <form action="{% url 'reports:delete_report' report.pk %}" method="post" class="d-inline"
+                            onsubmit="return confirm('{% trans "Supprimer ce rapport ?" %}');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="{% trans 'Supprimer' %}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5" style="color:var(--text-muted);">
+        <i class="bi bi-inbox" style="font-size:2.5rem; opacity:.35;"></i>
+        <p class="mt-2 mb-0">{% trans "Aucun rapport pour l'instant." %}</p>
+        {% if not is_admin %}
+        <a href="{% url 'reports:upload_report' %}" class="btn btn-primary-custom btn-sm mt-3">
+            <i class="bi bi-plus me-1"></i>{% trans "Télécharger un rapport" %}
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
 
-        function renderFileList() {
-            const files = Array.from(fileInput.files);
-            if (!files.length) {
-                fileLabel.style.display = 'none';
-                return;
-            }
-            const summary = `📎 ${files.length} fichier${files.length > 1 ? 's' : ''} sélectionné${files.length > 1 ? 's' : ''}`;
-            const list = files.map(f => `<div style="font-size:.8rem;">• ${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</div>`).join('');
-            fileLabel.innerHTML = `<strong>${summary}</strong>${list}`;
-            fileLabel.style.display = 'block';
-        }
+{% endblock %}
 
-        function applyFiles(fileArray) {
-            const valid = [];
-            for (const f of fileArray) {
-                const ext = '.' + f.name.split('.').pop().toLowerCase();
-                if (!ALLOWED.includes(ext)) { alert(`${f.name} : type non supporté`); continue; }
-                if (f.size > MAX_SIZE) { alert(`${f.name} : dépasse 25 MB`); continue; }
-                valid.push(f);
-            }
-            if (valid.length > MAX_FILES) {
-                alert(`Maximum ${MAX_FILES} fichiers par lot (${valid.length} sélectionnés).`);
-                return;
-            }
-            const dt = new DataTransfer();
-            valid.forEach(f => dt.items.add(f));
-            fileInput.files = dt.files;
-            renderFileList();
-        }
+{% block right_sidebar %}{% endblock %}
 
-        fileInput.addEventListener('change', () => applyFiles(Array.from(fileInput.files)));
+{% block extra_js %}
+<!-- Donut chart: isolated script tag so upload errors can't affect it -->
+<script>
+(function() {
+    var ring = document.getElementById('donutRing');
+    if (!ring) return;
+    var raw    = [{{ completed_count }}, {{ processing_count }}, {{ pending_count }}, {{ refused_count }}];
+    var colors = ['#26735B', '#3b82f6', '#f59e0b', '#ef4444'];
+    var total  = raw.reduce(function(a, b) { return a + b; }, 0);
+    if (total === 0) return;
+    // filter out zero-value slices to avoid zero-width stops
+    var slices = [];
+    for (var i = 0; i < raw.length; i++) {
+        if (raw[i] > 0) slices.push({ v: raw[i], c: colors[i] });
+    }
+    var cum = 0, stops = [];
+    for (var j = 0; j < slices.length; j++) {
+        var from = cum;
+        cum += (slices[j].v / total) * 100;
+        stops.push(slices[j].c + ' ' + from.toFixed(2) + '% ' + cum.toFixed(2) + '%');
+    }
+    ring.style.background = 'conic-gradient(' + stops.join(', ') + ')';
+})();
+</script>
 
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            applyFiles(Array.from(e.dataTransfer.files));
+{% if not is_admin %}
+<script>
+// ── FILE UPLOAD ──
+(function() {
+    var dropZone    = document.getElementById('drop-zone');
+    var fileInput   = document.getElementById('file-input');
+    var fileLabel   = document.getElementById('file-label');
+    var extractToggle = document.getElementById('extract-toggle');
+    var extractHint = document.getElementById('extract-hint');
+    var submitBtn   = document.getElementById('submit-btn');
+    var ocrForm     = document.getElementById('ocr-form');
+    if (!dropZone || !fileInput) return;
+
+    var MAX_FILES = 10, MAX_SIZE = 25 * 1024 * 1024;
+
+    function renderFileList() {
+        var files = Array.from(fileInput.files);
+        if (!files.length) { fileLabel.style.display = 'none'; return; }
+        fileLabel.innerHTML = '<i class="bi bi-paperclip me-1"></i>' + files.length + ' fichier(s) sélectionné(s)';
+        fileLabel.style.display = 'block';
+    }
+
+    function applyFiles(fileArray) {
+        var valid = [];
+        fileArray.forEach(function(f) {
+            var ext = '.' + f.name.split('.').pop().toLowerCase();
+            if (ext !== '.pdf') { alert(f.name + ' : PDF uniquement.'); return; }
+            if (f.size > MAX_SIZE) { alert(f.name + ' : dépasse 25 MB'); return; }
+            valid.push(f);
         });
+        if (valid.length > MAX_FILES) { alert('Maximum ' + MAX_FILES + ' fichiers.'); return; }
+        var dt = new DataTransfer();
+        valid.forEach(function(f) { dt.items.add(f); });
+        fileInput.files = dt.files;
+        renderFileList();
+    }
 
-        const extractToggle = document.getElementById('extract-toggle');
-        const extractHint = document.getElementById('extract-hint');
-        const submitBtn = document.getElementById('submit-btn');
-        extractToggle.addEventListener('change', () => {
+    fileInput.addEventListener('change', function() { applyFiles(Array.from(fileInput.files)); });
+    dropZone.addEventListener('dragover',  function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', function()  { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault(); dropZone.classList.remove('dragover');
+        applyFiles(Array.from(e.dataTransfer.files));
+    });
+
+    if (extractToggle) {
+        extractToggle.addEventListener('change', function() {
             if (extractToggle.checked) {
-                extractHint.textContent = 'Le rapport sera traité immédiatement.';
-                submitBtn.innerHTML = '<i class="bi bi-cpu me-1"></i> Lancer l\'extraction';
+                if (extractHint) extractHint.textContent = '{% trans "Le rapport sera traité immédiatement." %}';
+                if (submitBtn)   submitBtn.innerHTML = '<i class="bi bi-cpu me-1"></i> {% trans "Lancer l\'extraction" %}';
             } else {
-                extractHint.textContent = 'Le rapport sera envoyé à l\'admin pour validation.';
-                submitBtn.innerHTML = '<i class="bi bi-send me-1"></i> Envoyer à l\'admin';
+                if (extractHint) extractHint.textContent = '{% trans "Le rapport sera envoyé à l\'admin pour validation." %}';
+                if (submitBtn)   submitBtn.innerHTML = '<i class="bi bi-send me-1"></i> {% trans "Envoyer à l\'admin" %}';
             }
         });
+    }
 
-        document.getElementById('ocr-form').addEventListener('submit', () => {
-            const progress = document.getElementById('ocr-progress');
-            const bar = document.getElementById('progress-bar');
-            const pct = document.getElementById('progress-pct');
-            progress.style.display = 'block';
-            let val = 0;
-            const interval = setInterval(() => {
-                val = Math.min(val + Math.random() * 15, 90);
+    if (ocrForm) {
+        ocrForm.addEventListener('submit', function() {
+            document.getElementById('ocr-progress').style.display = 'block';
+            var bar = document.getElementById('progress-bar');
+            var pct = document.getElementById('progress-pct');
+            var val = 0;
+            var iv = setInterval(function() {
+                val = Math.min(val + Math.random() * 12, 90);
                 bar.style.width = val + '%';
                 pct.textContent = Math.round(val) + '%';
-                if (val >= 90) clearInterval(interval);
-            }, 200);
+                if (val >= 90) clearInterval(iv);
+            }, 250);
         });
-        {% endif %}
+    }
+})();
+</script>
+{% endif %}
 
-        const toggleBtn = document.getElementById('toggle-history');
-        const rightSidebar = document.getElementById('right-sidebar');
-        const mainContent = document.querySelector('.main-content');
-        let historyVisible = true;
+{% if is_admin %}
+// ── LIVE FILTER ──
+const adminSearch = document.getElementById('admin-search');
+const adminStatus = document.getElementById('admin-status-filter');
+const rows = document.querySelectorAll('.report-row');
+const resultsCount = document.getElementById('results-count');
 
-        toggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            historyVisible = !historyVisible;
-            if (historyVisible) {
-                rightSidebar.style.display = 'block';
-                mainContent.style.marginRight = 'var(--right-sidebar-width)';
-                toggleBtn.classList.add('active');
-            } else {
-                rightSidebar.style.display = 'none';
-                mainContent.style.marginRight = '0';
-                toggleBtn.classList.remove('active');
-            }
-        });
+function liveFilter() {
+    const q = adminSearch.value.toLowerCase().trim();
+    const status = adminStatus.value;
+    let visible = 0;
+    rows.forEach(row => {
+        const matchText = !q || row.dataset.title.includes(q) || row.dataset.user.includes(q);
+        const matchStatus = !status || row.dataset.status === status;
+        const show = matchText && matchStatus;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    resultsCount.textContent = visible + ' rapport' + (visible !== 1 ? 's' : '');
+}
 
-        {% if is_admin %}
-        // --- Live search & filter (client-side, instant) ---
-        const adminSearch = document.getElementById('admin-search');
-        const adminStatus = document.getElementById('admin-status-filter');
-        const rows = document.querySelectorAll('.report-row');
-        const resultsCount = document.getElementById('results-count');
-
-        function liveFilter() {
-            const q = adminSearch.value.toLowerCase().trim();
-            const status = adminStatus.value;
-            let visible = 0;
-            rows.forEach(row => {
-                const matchText = !q || row.dataset.title.includes(q) || row.dataset.user.includes(q);
-                const matchStatus = !status || row.dataset.status === status;
-                const show = matchText && matchStatus;
-                row.style.display = show ? '' : 'none';
-                if (show) visible++;
-            });
-            resultsCount.textContent = visible + ' rapport' + (visible !== 1 ? 's' : '');
-        }
-
-        adminSearch.addEventListener('input', liveFilter);
-        adminStatus.addEventListener('change', liveFilter);
-        {% endif %}
-    </script>
-</body>
-</html>
+adminSearch.addEventListener('input', liveFilter);
+adminStatus.addEventListener('change', liveFilter);
+{% endif %}
+</script>
+{% endblock %}

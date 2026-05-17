@@ -40,6 +40,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     filiale = models.CharField(max_length=100)
     email = models.EmailField(max_length=254, blank=True, default='')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

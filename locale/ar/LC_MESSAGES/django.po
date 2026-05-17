@@ -1,0 +1,363 @@
+# Arabic translations for DataLab PGH
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+
+# base_dashboard.html
+msgid "Changer de thème"
+msgstr "تغيير السمة"
+
+msgid "Bonjour,"
+msgstr "مرحباً،"
+
+msgid "Déconnexion"
+msgstr "تسجيل الخروج"
+
+msgid "Navigation"
+msgstr "التنقل"
+
+msgid "Tous les Rapports"
+msgstr "جميع التقارير"
+
+msgid "Mes Rapports"
+msgstr "تقاريري"
+
+msgid "Nouveau rapport"
+msgstr "تقرير جديد"
+
+msgid "Historique"
+msgstr "السجل"
+
+msgid "Administration"
+msgstr "الإدارة"
+
+msgid "Gestion Users"
+msgstr "إدارة المستخدمين"
+
+msgid "Paramètres"
+msgstr "الإعدادات"
+
+msgid "Mon profil"
+msgstr "ملفي الشخصي"
+
+# dashboard.html
+msgid "Tableau de Bord Admin"
+msgstr "لوحة تحكم المسؤول"
+
+msgid "Mode Administrateur"
+msgstr "وضع المسؤول"
+
+msgid "Vous visualisez tous les rapports de tous les utilisateurs."
+msgstr "تستعرض جميع تقارير المستخدمين."
+
+msgid "Répartition des rapports"
+msgstr "توزيع التقارير"
+
+msgid "Total"
+msgstr "الإجمالي"
+
+msgid "Terminés"
+msgstr "مكتملة"
+
+msgid "En cours"
+msgstr "قيد المعالجة"
+
+msgid "En attente"
+msgstr "في الانتظار"
+
+msgid "Refusés/Échec"
+msgstr "مرفوضة/فاشلة"
+
+msgid "Rapports au total"
+msgstr "إجمالي التقارير"
+
+msgid "Traitement terminé"
+msgstr "اكتملت المعالجة"
+
+msgid "En traitement"
+msgstr "قيد المعالجة"
+
+msgid "Utilisateurs"
+msgstr "المستخدمون"
+
+msgid "Extraction PDF"
+msgstr "استخراج PDF"
+
+msgid "Téléchargez un rapport PDF natif pour extraire automatiquement les données."
+msgstr "قم برفع تقرير PDF أصلي لاستخراج البيانات تلقائياً."
+
+msgid "Cliquez ou glissez-déposez"
+msgstr "انقر أو اسحب وأفلت"
+
+msgid "vos fichiers ici"
+msgstr "ملفاتك هنا"
+
+msgid "PDF natif uniquement — max. 25 MB / fichier — 10 fichiers max"
+msgstr "PDF أصلي فقط — الحد الأقصى 25 MB للملف — 10 ملفات كحد أقصى"
+
+msgid "Titre du rapport"
+msgstr "عنوان التقرير"
+
+msgid "ex: Rapport Labo Mars"
+msgstr "مثال: تقرير المختبر مارس"
+
+msgid "Traitement…"
+msgstr "جارٍ المعالجة…"
+
+msgid "Extraction automatique"
+msgstr "استخراج تلقائي"
+
+msgid "Le rapport sera traité immédiatement."
+msgstr "سيتم معالجة التقرير فوراً."
+
+msgid "Lancer l'extraction"
+msgstr "بدء الاستخراج"
+
+msgid "Le rapport sera envoyé à l'admin pour validation."
+msgstr "سيتم إرسال التقرير إلى المسؤول للتحقق."
+
+msgid "Envoyer à l'admin"
+msgstr "إرسال إلى المسؤول"
+
+msgid "Titre ou utilisateur…"
+msgstr "العنوان أو المستخدم…"
+
+msgid "Tous les statuts"
+msgstr "جميع الحالات"
+
+msgid "Terminé"
+msgstr "مكتمل"
+
+msgid "Refusé"
+msgstr "مرفوض"
+
+msgid "Traitement"
+msgstr "معالجة"
+
+msgid "Échec"
+msgstr "فشل"
+
+msgid "Filtrer"
+msgstr "تصفية"
+
+msgid "Réinitialiser"
+msgstr "إعادة تعيين"
+
+msgid "Nouveau"
+msgstr "جديد"
+
+msgid "Titre"
+msgstr "العنوان"
+
+msgid "Utilisateur"
+msgstr "المستخدم"
+
+msgid "Fichier"
+msgstr "الملف"
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Statut"
+msgstr "الحالة"
+
+msgid "Actions"
+msgstr "الإجراءات"
+
+msgid "Voir le PDF"
+msgstr "عرض PDF"
+
+msgid "Approuver et lancer l'extraction ?"
+msgstr "الموافقة وبدء الاستخراج؟"
+
+msgid "Approuver"
+msgstr "موافقة"
+
+msgid "Refuser ce rapport ?"
+msgstr "رفض هذا التقرير؟"
+
+msgid "Refuser"
+msgstr "رفض"
+
+msgid "Supprimer ce rapport ?"
+msgstr "حذف هذا التقرير؟"
+
+msgid "Supprimer"
+msgstr "حذف"
+
+msgid "Aucun rapport pour l'instant."
+msgstr "لا توجد تقارير حتى الآن."
+
+msgid "Télécharger un rapport"
+msgstr "رفع تقرير"
+
+msgid "Historique des activités"
+msgstr "سجل الأنشطة"
+
+msgid "Aucune activité récente."
+msgstr "لا توجد أنشطة حديثة."
+
+# history.html
+msgid "Toutes les opérations de traitement de rapports, les plus récentes en premier."
+msgstr "جميع عمليات معالجة التقارير، الأحدث أولاً."
+
+msgid "Rechercher un rapport…"
+msgstr "البحث عن تقرير…"
+
+msgid "rapport(s)"
+msgstr "تقرير(تقارير)"
+
+msgid "Aucun résultat pour votre recherche."
+msgstr "لا توجد نتائج لبحثك."
+
+msgid "Aucune activité pour l'instant."
+msgstr "لا توجد أنشطة حتى الآن."
+
+msgid "Télécharger votre premier rapport →"
+msgstr "ارفع تقريرك الأول ←"
+
+# manage_users.html
+msgid "Gestion des Utilisateurs"
+msgstr "إدارة المستخدمين"
+
+msgid "Visualisez et gérez tous les comptes utilisateurs."
+msgstr "عرض وإدارة جميع حسابات المستخدمين."
+
+msgid "Utilisateurs total"
+msgstr "إجمالي المستخدمين"
+
+msgid "Comptes actifs"
+msgstr "الحسابات النشطة"
+
+msgid "Filiales représentées"
+msgstr "الفروع الممثَّلة"
+
+msgid "Liste des Utilisateurs"
+msgstr "قائمة المستخدمين"
+
+msgid "Rechercher…"
+msgstr "بحث…"
+
+msgid "Nom complet"
+msgstr "الاسم الكامل"
+
+msgid "Filiale"
+msgstr "الفرع"
+
+msgid "Actif"
+msgstr "نشط"
+
+msgid "Inactif"
+msgstr "غير نشط"
+
+msgid "Modifier le mot de passe"
+msgstr "تغيير كلمة المرور"
+
+msgid "Supprimer l'utilisateur"
+msgstr "حذف المستخدم"
+
+msgid "Aucun utilisateur pour l'instant."
+msgstr "لا يوجد مستخدمون حتى الآن."
+
+msgid "Utilisateur :"
+msgstr "المستخدم:"
+
+msgid "Nouveau mot de passe"
+msgstr "كلمة المرور الجديدة"
+
+msgid "Minimum 8 caractères"
+msgstr "8 أحرف على الأقل"
+
+msgid "Confirmer le mot de passe"
+msgstr "تأكيد كلمة المرور"
+
+msgid "Répétez le mot de passe"
+msgstr "أعد كتابة كلمة المرور"
+
+msgid "Le mot de passe doit contenir au moins 8 caractères."
+msgstr "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل."
+
+msgid "Annuler"
+msgstr "إلغاء"
+
+msgid "Enregistrer"
+msgstr "حفظ"
+
+msgid "Les mots de passe ne correspondent pas."
+msgstr "كلمتا المرور غير متطابقتين."
+
+msgid "Trop faible"
+msgstr "ضعيفة جداً"
+
+msgid "Faible"
+msgstr "ضعيفة"
+
+msgid "Moyen"
+msgstr "متوسطة"
+
+msgid "Fort"
+msgstr "قوية"
+
+msgid "Les mots de passe correspondent"
+msgstr "كلمتا المرور متطابقتان"
+
+msgid "Les mots de passe ne correspondent pas"
+msgstr "كلمتا المرور غير متطابقتين"
+
+# profil.html
+msgid "Mon Profil"
+msgstr "ملفي الشخصي"
+
+msgid "Changer la photo"
+msgstr "تغيير الصورة"
+
+msgid "Administrateur"
+msgstr "مسؤول"
+
+msgid "Mail"
+msgstr "البريد الإلكتروني"
+
+msgid "Informations du compte"
+msgstr "معلومات الحساب"
+
+msgid "Identifiant"
+msgstr "المعرف"
+
+msgid "Nom d'utilisateur"
+msgstr "اسم المستخدم"
+
+msgid "Rôle"
+msgstr "الدور"
+
+msgid "Statut"
+msgstr "الحالة"
+
+msgid "Sécurité"
+msgstr "الأمان"
+
+msgid "Pour changer votre mot de passe, contactez votre administrateur."
+msgstr "لتغيير كلمة المرور، تواصل مع المسؤول."
+
+msgid "Modifier mes informations"
+msgstr "تعديل معلوماتي"
+
+msgid "Photo de profil"
+msgstr "صورة الملف الشخصي"
+
+msgid "Choisir une image"
+msgstr "اختر صورة"
+
+msgid "JPG, PNG, GIF ou WebP — max. 5 MB"
+msgstr "JPG أو PNG أو GIF أو WebP — الحد الأقصى 5 MB"
+
+msgid "Nom"
+msgstr "اللقب"
+
+msgid "Prénom"
+msgstr "الاسم"
+
+msgid "Adresse mail"
+msgstr "البريد الإلكتروني"

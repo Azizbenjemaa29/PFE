@@ -1,59 +1,137 @@
-{% extends 'registration/base.html' %}
+{% extends 'reports/base_dashboard.html' %}
+{% load static i18n %}
 
-{% block title %}Nouveau Rapport{% endblock %}
+{% block title %}{% trans "Nouveau rapport" %}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %} py-2" style="font-size:.85rem;">
-            {{ message }}
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h4 class="mb-0">Télécharger des rapports</h4>
-            </div>
-            <div class="card-body">
-                <form method="post" action="{% url 'reports:upload_report' %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="id_title" class="form-label">Titre du rapport</label>
-                        <input type="text" name="title" id="id_title" class="form-control" required>
-                        <div class="form-text">Si plusieurs fichiers sont sélectionnés, le nom du fichier est ajouté au titre.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="id_file" class="form-label">Fichiers (PDF / image)</label>
-                        <input type="file" name="file" id="id_file" class="form-control"
-                               accept=".pdf,.png,.jpg,.jpeg,.tiff" multiple required>
-                        <div class="form-text">PDF, PNG, JPG, TIFF — max 25 MB par fichier, 10 fichiers max.</div>
-                        <div id="file-preview" class="mt-2"></div>
-                    </div>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="extract_now" name="extract_now" value="1" checked>
-                        <label class="form-check-label" for="extract_now">Extraction automatique</label>
-                    </div>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% url 'reports:dashboard' %}" class="btn btn-outline-secondary me-md-2">Annuler</a>
-                        <button type="submit" class="btn btn-primary">Télécharger</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+<div class="section-title">
+    <i class="bi bi-cloud-upload"></i> {% trans "Nouveau rapport" %}
 </div>
 
+<div class="ocr-card" style="max-width:860px;">
+    <h5 style="font-weight:700; color:var(--primary); font-size:.95rem; margin-bottom:5px;">
+        <i class="bi bi-file-earmark-arrow-up me-2"></i>{% trans "Extraction PDF" %}
+    </h5>
+    <p style="color:var(--text-muted); font-size:.82rem; margin-bottom:18px;">
+        {% trans "Téléchargez un rapport PDF natif pour extraire automatiquement les données." %}
+    </p>
+
+    <form method="post" action="{% url 'reports:upload_report' %}" enctype="multipart/form-data" id="ocr-form">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="upload-icon"><i class="bi bi-file-earmark-pdf"></i></div>
+                    <p><strong>{% trans "Cliquez ou glissez-déposez" %}</strong> {% trans "vos fichiers ici" %}</p>
+                    <p style="margin-top:4px;"><small>{% trans "PDF natif uniquement — max. 25 MB / fichier — 10 fichiers max" %}</small></p>
+                    <div class="file-list-preview" id="file-label" style="display:none;"></div>
+                    <input type="file" name="file" id="file-input" accept=".pdf"
+                        style="display:none;" multiple required>
+                </div>
+            </div>
+            <div class="col-md-4 d-flex flex-column gap-2">
+                <label class="form-label">{% trans "Titre du rapport" %}</label>
+                <input type="text" name="title" class="form-control"
+                    placeholder="{% trans 'ex: Rapport Labo Mars' %}" required>
+
+                <div id="ocr-progress" style="display:none;" class="mt-1">
+                    <div class="d-flex justify-content-between mb-1" style="font-size:.78rem; color:var(--text-muted);">
+                        <span>{% trans "Traitement…" %}</span>
+                        <span id="progress-pct">0%</span>
+                    </div>
+                    <div class="progress" style="height:5px; border-radius:10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                            id="progress-bar" style="width:0%; background:var(--primary);"></div>
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mt-1">
+                    <input class="form-check-input" type="checkbox" id="extract-toggle"
+                        name="extract_now" value="1" checked>
+                    <label class="form-check-label" for="extract-toggle" style="font-size:.8rem;">
+                        {% trans "Extraction automatique" %}
+                    </label>
+                </div>
+                <small class="text-muted" id="extract-hint" style="font-size:.72rem;">
+                    {% trans "Le rapport sera traité immédiatement." %}
+                </small>
+
+                <div class="d-flex gap-2 mt-auto">
+                    <button type="submit" class="btn btn-primary-custom flex-grow-1" id="submit-btn">
+                        <i class="bi bi-cpu me-1"></i> {% trans "Lancer l'extraction" %}
+                    </button>
+                    <a href="{% url 'reports:dashboard' %}" class="btn btn-outline-custom">
+                        {% trans "Annuler" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-    const fileInput = document.getElementById('id_file');
-    const preview = document.getElementById('file-preview');
-    fileInput.addEventListener('change', () => {
-        const files = Array.from(fileInput.files);
-        preview.innerHTML = files.length
-            ? '<ul class="list-unstyled mb-0">' + files.map(f => `<li>📎 ${f.name} — ${(f.size / 1024 / 1024).toFixed(2)} MB</li>`).join('') + '</ul>'
-            : '';
-    });
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const fileLabel = document.getElementById('file-label');
+const MAX_FILES = 10;
+const MAX_SIZE = 25 * 1024 * 1024;
+
+function renderFileList() {
+    const files = Array.from(fileInput.files);
+    if (!files.length) { fileLabel.style.display = 'none'; return; }
+    fileLabel.innerHTML = `<i class="bi bi-paperclip me-1"></i>${files.length} {% trans "fichier(s) sélectionné(s)" %}`;
+    fileLabel.style.display = 'block';
+}
+
+function applyFiles(fileArray) {
+    const valid = [];
+    for (const f of fileArray) {
+        const ext = '.' + f.name.split('.').pop().toLowerCase();
+        if (ext !== '.pdf') { alert(`${f.name} : PDF uniquement.`); continue; }
+        if (f.size > MAX_SIZE) { alert(`${f.name} : dépasse 25 MB`); continue; }
+        valid.push(f);
+    }
+    if (valid.length > MAX_FILES) { alert(`Maximum ${MAX_FILES} fichiers.`); return; }
+    const dt = new DataTransfer();
+    valid.forEach(f => dt.items.add(f));
+    fileInput.files = dt.files;
+    renderFileList();
+}
+
+fileInput.addEventListener('change', () => applyFiles(Array.from(fileInput.files)));
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    applyFiles(Array.from(e.dataTransfer.files));
+});
+
+const extractToggle = document.getElementById('extract-toggle');
+const extractHint = document.getElementById('extract-hint');
+const submitBtn = document.getElementById('submit-btn');
+extractToggle.addEventListener('change', () => {
+    if (extractToggle.checked) {
+        extractHint.textContent = '{% trans "Le rapport sera traité immédiatement." %}';
+        submitBtn.innerHTML = '<i class="bi bi-cpu me-1"></i> {% trans "Lancer l\'extraction" %}';
+    } else {
+        extractHint.textContent = '{% trans "Le rapport sera envoyé à l\'admin pour validation." %}';
+        submitBtn.innerHTML = '<i class="bi bi-send me-1"></i> {% trans "Envoyer à l\'admin" %}';
+    }
+});
+
+document.getElementById('ocr-form').addEventListener('submit', () => {
+    document.getElementById('ocr-progress').style.display = 'block';
+    const bar = document.getElementById('progress-bar');
+    const pct = document.getElementById('progress-pct');
+    let val = 0;
+    const iv = setInterval(() => {
+        val = Math.min(val + Math.random() * 12, 90);
+        bar.style.width = val + '%';
+        pct.textContent = Math.round(val) + '%';
+        if (val >= 90) clearInterval(iv);
+    }, 250);
+});
 </script>
 {% endblock %}

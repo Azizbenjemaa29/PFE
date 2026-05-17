@@ -4,41 +4,29 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.db.models import Q
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.http import require_POST
 from .models import Report, RapportHeader, RapportResultat
-from .forms import ReportForm, ProfilForm
+from .forms import ReportForm, ProfilForm, AdminChangePasswordForm
 from .extractor import extract_rapport
 
 MAX_UPLOAD_SIZE = 25 * 1024 * 1024  # 25 MB
 MAX_FILES_PER_BATCH = 10
-ALLOWED_EXTENSIONS = {'.pdf', '.png', '.jpg', '.jpeg', '.tiff'}
+ALLOWED_EXTENSIONS = {'.pdf'}
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 
 User = get_user_model()
 
 
 def _run_extraction(report: Report) -> None:
-    """
-    Lance l'extraction PDF et persiste les données dans :
-        - RapportHeader   (Partie 1 — champs entête)
-        - RapportResultat (Partie 2 — lignes du tableau résultats)
-    Met à jour report.status et report.processed_text.
-    """
     report.status = 'PROCESSING'
     report.save(update_fields=['status'])
-
     try:
         pdf_path = report.file.path
         data = extract_rapport(pdf_path)
-
-        # --- Partie 1 : créer RapportHeader ---
         RapportHeader.objects.filter(report=report).delete()
-        header_obj = RapportHeader.objects.create(
-            report=report,
-            **data['header']
-        )
-
-        # --- Partie 2 : créer les lignes RapportResultat ---
+        header_obj = RapportHeader.objects.create(report=report, **data['header'])
         RapportResultat.objects.filter(header=header_obj).delete()
         for row in data['resultats']:
             RapportResultat.objects.create(
@@ -48,11 +36,9 @@ def _run_extraction(report: Report) -> None:
                 resultat=row['resultat'],
                 unite=row['unite'],
             )
-
         report.processed_text = data['raw_text']
         report.status = 'COMPLETED'
         report.save(update_fields=['processed_text', 'status'])
-
     except Exception as e:
         report.status = 'FAILED'
         report.processed_text = f"Erreur extraction : {e}"
@@ -79,16 +65,14 @@ def dashboard(request):
         reports = Report.objects.filter(is_deleted=False).order_by('-uploaded_at')
         completed_count = reports.filter(status='COMPLETED').count()
         pending_count = reports.filter(status='PENDING').count()
+        processing_count = reports.filter(status='PROCESSING').count()
         refused_count = reports.filter(status='REFUSED').count()
         users_count = User.objects.filter(role='user').count()
 
-        # --- Filtrage admin (recherche + statut) ---
         q = request.GET.get('q', '').strip()
         status_filter = request.GET.get('status', '').strip()
         if q:
-            reports = reports.filter(
-                Q(title__icontains=q) | Q(user__nom__icontains=q)
-            )
+            reports = reports.filter(Q(title__icontains=q) | Q(user__nom__icontains=q))
         if status_filter:
             reports = reports.filter(status=status_filter)
 
@@ -96,24 +80,30 @@ def dashboard(request):
             'reports': reports,
             'completed_count': completed_count,
             'pending_count': pending_count,
+            'processing_count': processing_count,
             'refused_count': refused_count,
             'users_count': users_count,
             'is_admin': True,
             'search_query': q,
             'status_filter': status_filter,
+            'active_page': 'dashboard',
         })
     else:
         reports = Report.objects.filter(user=request.user, is_deleted=False).order_by('-uploaded_at')
         completed_count = reports.filter(status='COMPLETED').count()
         pending_count = reports.filter(status='PENDING').count()
+        processing_count = reports.filter(status='PROCESSING').count()
         refused_count = reports.filter(status='REFUSED').count()
         return render(request, 'reports/dashboard.html', {
             'reports': reports,
             'completed_count': completed_count,
             'pending_count': pending_count,
+            'processing_count': processing_count,
             'refused_count': refused_count,
             'is_admin': False,
+            'active_page': 'dashboard',
         })
+
 
 @login_required
 def upload_report(request):
@@ -129,10 +119,7 @@ def upload_report(request):
             messages.error(request, "Veuillez sélectionner au moins un fichier.")
             return redirect('reports:upload_report')
         if len(files) > MAX_FILES_PER_BATCH:
-            messages.error(
-                request,
-                f"Maximum {MAX_FILES_PER_BATCH} fichiers par lot ({len(files)} soumis)."
-            )
+            messages.error(request, f"Maximum {MAX_FILES_PER_BATCH} fichiers par lot ({len(files)} soumis).")
             return redirect('reports:upload_report')
 
         success_count = 0
@@ -142,7 +129,12 @@ def upload_report(request):
         for f in files:
             ext = os.path.splitext(f.name)[1].lower()
             if ext not in ALLOWED_EXTENSIONS:
-                messages.error(request, f"{f.name} : type de fichier non supporté.")
+                messages.error(request, f"{f.name} : seuls les PDF natifs sont acceptés.")
+                fail_count += 1
+                continue
+            # Verify MIME type
+            if hasattr(f, 'content_type') and f.content_type and 'pdf' not in f.content_type.lower():
+                messages.error(request, f"{f.name} : type MIME invalide (PDF uniquement).")
                 fail_count += 1
                 continue
             if f.size > MAX_UPLOAD_SIZE:
@@ -151,13 +143,8 @@ def upload_report(request):
                 continue
 
             report_title = f"{title} — {f.name}" if multi else title
-
             try:
-                report = Report(
-                    title=report_title,
-                    file=f,
-                    user=request.user,
-                )
+                report = Report(title=report_title, file=f, user=request.user)
                 if extract_now:
                     report.save()
                     _run_extraction(report)
@@ -165,22 +152,23 @@ def upload_report(request):
                     report.status = 'PENDING'
                     report.save()
                 success_count += 1
-                messages.success(request, f"{f.name} : traité avec succès.")
             except Exception as e:
                 fail_count += 1
                 messages.error(request, f"{f.name} : échec ({e}).")
 
         if success_count and not fail_count:
-            messages.success(request, f"{success_count} rapport(s) téléchargé(s).")
+            messages.success(request, f"{success_count} rapport(s) téléchargé(s) avec succès.")
         elif success_count and fail_count:
-            messages.warning(
-                request,
-                f"{success_count} réussi(s), {fail_count} échec(s)."
-            )
+            messages.warning(request, f"{success_count} réussi(s), {fail_count} échec(s).")
         return redirect('reports:dashboard')
 
     form = ReportForm()
-    return render(request, 'reports/upload.html', {'form': form})
+    return render(request, 'reports/upload.html', {
+        'form': form,
+        'active_page': 'upload',
+        'is_admin': request.user.role == 'admin',
+    })
+
 
 @login_required
 def history(request):
@@ -188,7 +176,22 @@ def history(request):
         reports = Report.objects.filter(is_deleted=False).order_by('-uploaded_at')
     else:
         reports = Report.objects.filter(user=request.user, is_deleted=False).order_by('-uploaded_at')
-    return render(request, 'reports/history.html', {'reports': reports})
+
+    q = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    if q:
+        reports = reports.filter(Q(title__icontains=q))
+    if status_filter:
+        reports = reports.filter(status=status_filter)
+
+    return render(request, 'reports/history.html', {
+        'reports': reports,
+        'is_admin': request.user.role == 'admin',
+        'search_query': q,
+        'status_filter': status_filter,
+        'active_page': 'history',
+    })
+
 
 @login_required
 def delete_report(request, pk):
@@ -204,15 +207,13 @@ def delete_report(request, pk):
             header.resultats.all().update(is_deleted=True)
         except RapportHeader.DoesNotExist:
             pass
-        # Soft delete : on garde le rapport dans la DB mais on le marque comme supprimé
         report.is_deleted = True
         report.save(update_fields=['is_deleted'])
-        return redirect('reports:dashboard')
     return redirect('reports:dashboard')
+
 
 @login_required
 def approve_report(request, pk):
-    """Admin approuve un rapport en attente → lance l'extraction."""
     if request.user.role != 'admin' or request.method != 'POST':
         return redirect('reports:dashboard')
     report = get_object_or_404(Report, pk=pk, status='PENDING')
@@ -222,7 +223,6 @@ def approve_report(request, pk):
 
 @login_required
 def refuse_report(request, pk):
-    """Admin refuse un rapport en attente."""
     if request.user.role != 'admin' or request.method != 'POST':
         return redirect('reports:dashboard')
     report = get_object_or_404(Report, pk=pk, status='PENDING')
@@ -235,20 +235,57 @@ def refuse_report(request, pk):
 def manage_users(request):
     if request.user.role != 'admin':
         return redirect('reports:dashboard')
-    users = User.objects.filter(role='user')
-    return render(request, 'reports/manage_users.html', {'users': users})
+    users = User.objects.filter(role='user').order_by('nom')
+    filiales = users.values_list('filiale', flat=True).distinct()
+    return render(request, 'reports/manage_users.html', {
+        'users': users,
+        'filiales': filiales,
+        'is_admin': True,
+        'active_page': 'manage_users',
+    })
+
+
+@login_required
+def change_user_password(request, pk):
+    if request.user.role != 'admin':
+        return redirect('reports:dashboard')
+    target_user = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        form = AdminChangePasswordForm(request.POST)
+        if form.is_valid():
+            target_user.set_password(form.cleaned_data['password1'])
+            target_user.save()
+            messages.success(request, f"Mot de passe de {target_user.nom} modifié avec succès.")
+            return redirect('reports:manage_users')
+        else:
+            for error in form.errors.values():
+                messages.error(request, error[0])
+            return redirect('reports:manage_users')
+    return redirect('reports:manage_users')
+
 
 @login_required
 def profil(request):
     if request.method == 'POST':
-        form = ProfilForm(request.POST, instance=request.user)
+        form = ProfilForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
+            # Validate avatar file if provided
+            avatar = request.FILES.get('avatar')
+            if avatar:
+                ext = os.path.splitext(avatar.name)[1].lower()
+                if ext not in ALLOWED_IMAGE_EXTENSIONS:
+                    messages.error(request, "Format d'image non supporté. Utilisez JPG, PNG, GIF ou WebP.")
+                    return redirect('reports:profil')
+                if avatar.size > 5 * 1024 * 1024:
+                    messages.error(request, "L'image ne doit pas dépasser 5 MB.")
+                    return redirect('reports:profil')
             form.save()
+            messages.success(request, "Profil mis à jour avec succès.")
             return redirect('reports:profil')
     else:
         form = ProfilForm(instance=request.user)
     return render(request, 'reports/profil.html', {
         'form': form,
         'is_admin': request.user.role == 'admin',
+        'active_page': 'profil',
     })
-

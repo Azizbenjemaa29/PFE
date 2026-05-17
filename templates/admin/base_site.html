@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block branding %}
+<div id="site-name" style="display: flex; align-items: center; gap: 22px; padding: 20px 0;">
+    <img src="{% static 'reports/images/logo.png' %}" alt="Poulina Group Holding" style="height: 95px; width: auto; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); filter: drop-shadow(0 6px 18px rgba(38, 115, 91, 0.3));">
+    <div style="flex: 1;">
+        <div style="font-size: 2.1rem; font-weight: 900; color: #26735B; line-height: 1; letter-spacing: -0.5px; margin-bottom: 4px;">DataLab PGH</div>
+        <div style="font-size: 0.9rem; color: #2fa67a; font-weight: 600; letter-spacing: 0.08em;">POULINA GROUP HOLDING</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    #branding {
+        display: flex;
+        align-items: center;
+        padding: 20px 32px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 50%, #f0f9f5 100%);
+        border-bottom: 4px solid #26735B;
+        box-shadow: 0 2px 16px rgba(38, 115, 91, 0.1);
+        position: relative;
+    }
+
+    #branding::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #26735B, #2fa67a, #26735B);
+    }
+
+    #branding a {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        text-decoration: none;
+        color: #26735B;
+        width: 100%;
+    }
+
+    #branding img {
+        height: 95px;
+        width: auto;
+        filter: drop-shadow(0 6px 18px rgba(38, 115, 91, 0.3));
+        flex-shrink: 0;
+    }
+
+    #branding span {
+        font-size: 2.1rem;
+        font-weight: 900;
+        color: #26735B;
+        letter-spacing: -0.5px;
+    }
+</style>
+{% endblock %}

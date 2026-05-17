@@ -1,0 +1,363 @@
+# English translations for DataLab PGH
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# base_dashboard.html
+msgid "Changer de thème"
+msgstr "Toggle theme"
+
+msgid "Bonjour,"
+msgstr "Hello,"
+
+msgid "Déconnexion"
+msgstr "Logout"
+
+msgid "Navigation"
+msgstr "Navigation"
+
+msgid "Tous les Rapports"
+msgstr "All Reports"
+
+msgid "Mes Rapports"
+msgstr "My Reports"
+
+msgid "Nouveau rapport"
+msgstr "New report"
+
+msgid "Historique"
+msgstr "History"
+
+msgid "Administration"
+msgstr "Administration"
+
+msgid "Gestion Users"
+msgstr "Manage Users"
+
+msgid "Paramètres"
+msgstr "Settings"
+
+msgid "Mon profil"
+msgstr "My profile"
+
+# dashboard.html
+msgid "Tableau de Bord Admin"
+msgstr "Admin Dashboard"
+
+msgid "Mode Administrateur"
+msgstr "Administrator Mode"
+
+msgid "Vous visualisez tous les rapports de tous les utilisateurs."
+msgstr "You are viewing all reports from all users."
+
+msgid "Répartition des rapports"
+msgstr "Report Distribution"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Terminés"
+msgstr "Completed"
+
+msgid "En cours"
+msgstr "In Progress"
+
+msgid "En attente"
+msgstr "Pending"
+
+msgid "Refusés/Échec"
+msgstr "Refused/Failed"
+
+msgid "Rapports au total"
+msgstr "Total reports"
+
+msgid "Traitement terminé"
+msgstr "Processing complete"
+
+msgid "En traitement"
+msgstr "Processing"
+
+msgid "Utilisateurs"
+msgstr "Users"
+
+msgid "Extraction PDF"
+msgstr "PDF Extraction"
+
+msgid "Téléchargez un rapport PDF natif pour extraire automatiquement les données."
+msgstr "Upload a native PDF report to automatically extract data."
+
+msgid "Cliquez ou glissez-déposez"
+msgstr "Click or drag and drop"
+
+msgid "vos fichiers ici"
+msgstr "your files here"
+
+msgid "PDF natif uniquement — max. 25 MB / fichier — 10 fichiers max"
+msgstr "Native PDF only — max. 25 MB / file — 10 files max"
+
+msgid "Titre du rapport"
+msgstr "Report title"
+
+msgid "ex: Rapport Labo Mars"
+msgstr "e.g. Lab Report March"
+
+msgid "Traitement…"
+msgstr "Processing…"
+
+msgid "Extraction automatique"
+msgstr "Automatic extraction"
+
+msgid "Le rapport sera traité immédiatement."
+msgstr "The report will be processed immediately."
+
+msgid "Lancer l'extraction"
+msgstr "Start extraction"
+
+msgid "Le rapport sera envoyé à l'admin pour validation."
+msgstr "The report will be sent to the admin for validation."
+
+msgid "Envoyer à l'admin"
+msgstr "Send to admin"
+
+msgid "Titre ou utilisateur…"
+msgstr "Title or user…"
+
+msgid "Tous les statuts"
+msgstr "All statuses"
+
+msgid "Terminé"
+msgstr "Completed"
+
+msgid "Refusé"
+msgstr "Refused"
+
+msgid "Traitement"
+msgstr "Processing"
+
+msgid "Échec"
+msgstr "Failed"
+
+msgid "Filtrer"
+msgstr "Filter"
+
+msgid "Réinitialiser"
+msgstr "Reset"
+
+msgid "Nouveau"
+msgstr "New"
+
+msgid "Titre"
+msgstr "Title"
+
+msgid "Utilisateur"
+msgstr "User"
+
+msgid "Fichier"
+msgstr "File"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Statut"
+msgstr "Status"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Voir le PDF"
+msgstr "View PDF"
+
+msgid "Approuver et lancer l'extraction ?"
+msgstr "Approve and start extraction?"
+
+msgid "Approuver"
+msgstr "Approve"
+
+msgid "Refuser ce rapport ?"
+msgstr "Refuse this report?"
+
+msgid "Refuser"
+msgstr "Refuse"
+
+msgid "Supprimer ce rapport ?"
+msgstr "Delete this report?"
+
+msgid "Supprimer"
+msgstr "Delete"
+
+msgid "Aucun rapport pour l'instant."
+msgstr "No reports yet."
+
+msgid "Télécharger un rapport"
+msgstr "Upload a report"
+
+msgid "Historique des activités"
+msgstr "Activity history"
+
+msgid "Aucune activité récente."
+msgstr "No recent activity."
+
+# history.html
+msgid "Toutes les opérations de traitement de rapports, les plus récentes en premier."
+msgstr "All report processing operations, most recent first."
+
+msgid "Rechercher un rapport…"
+msgstr "Search for a report…"
+
+msgid "rapport(s)"
+msgstr "report(s)"
+
+msgid "Aucun résultat pour votre recherche."
+msgstr "No results for your search."
+
+msgid "Aucune activité pour l'instant."
+msgstr "No activity yet."
+
+msgid "Télécharger votre premier rapport →"
+msgstr "Upload your first report →"
+
+# manage_users.html
+msgid "Gestion des Utilisateurs"
+msgstr "User Management"
+
+msgid "Visualisez et gérez tous les comptes utilisateurs."
+msgstr "View and manage all user accounts."
+
+msgid "Utilisateurs total"
+msgstr "Total users"
+
+msgid "Comptes actifs"
+msgstr "Active accounts"
+
+msgid "Filiales représentées"
+msgstr "Subsidiaries"
+
+msgid "Liste des Utilisateurs"
+msgstr "Users List"
+
+msgid "Rechercher…"
+msgstr "Search…"
+
+msgid "Nom complet"
+msgstr "Full name"
+
+msgid "Filiale"
+msgstr "Subsidiary"
+
+msgid "Actif"
+msgstr "Active"
+
+msgid "Inactif"
+msgstr "Inactive"
+
+msgid "Modifier le mot de passe"
+msgstr "Change password"
+
+msgid "Supprimer l'utilisateur"
+msgstr "Delete user"
+
+msgid "Aucun utilisateur pour l'instant."
+msgstr "No users yet."
+
+msgid "Utilisateur :"
+msgstr "User:"
+
+msgid "Nouveau mot de passe"
+msgstr "New password"
+
+msgid "Minimum 8 caractères"
+msgstr "Minimum 8 characters"
+
+msgid "Confirmer le mot de passe"
+msgstr "Confirm password"
+
+msgid "Répétez le mot de passe"
+msgstr "Repeat password"
+
+msgid "Le mot de passe doit contenir au moins 8 caractères."
+msgstr "Password must be at least 8 characters."
+
+msgid "Annuler"
+msgstr "Cancel"
+
+msgid "Enregistrer"
+msgstr "Save"
+
+msgid "Les mots de passe ne correspondent pas."
+msgstr "Passwords do not match."
+
+msgid "Trop faible"
+msgstr "Too weak"
+
+msgid "Faible"
+msgstr "Weak"
+
+msgid "Moyen"
+msgstr "Medium"
+
+msgid "Fort"
+msgstr "Strong"
+
+msgid "Les mots de passe correspondent"
+msgstr "Passwords match"
+
+msgid "Les mots de passe ne correspondent pas"
+msgstr "Passwords do not match"
+
+# profil.html
+msgid "Mon Profil"
+msgstr "My Profile"
+
+msgid "Changer la photo"
+msgstr "Change photo"
+
+msgid "Administrateur"
+msgstr "Administrator"
+
+msgid "Mail"
+msgstr "Email"
+
+msgid "Informations du compte"
+msgstr "Account information"
+
+msgid "Identifiant"
+msgstr "ID"
+
+msgid "Nom d'utilisateur"
+msgstr "Username"
+
+msgid "Rôle"
+msgstr "Role"
+
+msgid "Statut"
+msgstr "Status"
+
+msgid "Sécurité"
+msgstr "Security"
+
+msgid "Pour changer votre mot de passe, contactez votre administrateur."
+msgstr "To change your password, contact your administrator."
+
+msgid "Modifier mes informations"
+msgstr "Edit my information"
+
+msgid "Photo de profil"
+msgstr "Profile photo"
+
+msgid "Choisir une image"
+msgstr "Choose an image"
+
+msgid "JPG, PNG, GIF ou WebP — max. 5 MB"
+msgstr "JPG, PNG, GIF or WebP — max. 5 MB"
+
+msgid "Nom"
+msgstr "Last name"
+
+msgid "Prénom"
+msgstr "First name"
+
+msgid "Adresse mail"
+msgstr "Email address"

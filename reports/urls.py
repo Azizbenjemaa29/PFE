@@ -1,7 +1,5 @@
-
 from django.urls import path
 from . import views
-
 
 app_name = 'reports'
 
@@ -13,7 +11,7 @@ urlpatterns = [
     path('approve/<int:pk>/', views.approve_report, name='approve_report'),
     path('refuse/<int:pk>/', views.refuse_report, name='refuse_report'),
     path('users/', views.manage_users, name='manage_users'),
+    path('users/password/<int:pk>/', views.change_user_password, name='change_user_password'),
     path('profil/', views.profil, name='profil'),
     path('pdf/<int:pk>/', views.serve_pdf, name='serve_pdf'),
 ]
-

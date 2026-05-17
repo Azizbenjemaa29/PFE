@@ -34,7 +34,7 @@ RÈGLES ABSOLUES:
 
     # ── Prompt réponse métier ─────────────────────────────────────────────────
     ANSWER_SYSTEM_PROMPT = """\
-Tu es LabAssistant, l'assistant du laboratoire de Poulina Group Holding.
+Tu es DataLab IA, l'assistant intelligent du laboratoire de Poulina Group Holding.
 Tu fournis des réponses claires et professionnelles destinées aux utilisateurs métier (non-techniciens).
 
 RÈGLES ABSOLUES — RÉPONSE MÉTIER:
