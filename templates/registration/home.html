@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr" dir="ltr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,6 +45,11 @@
             background-attachment: fixed;
             overflow-x: hidden;
             transition: background 0.3s, color 0.3s;
+        }
+
+        /* Arabic font support */
+        [lang="ar"] body, body.lang-ar {
+            font-family: 'Segoe UI', 'Tahoma', system-ui, sans-serif;
         }
 
         /* ── NAVBAR ── */
@@ -112,6 +117,83 @@
             transition: all .2s;
         }
 
+        /* ── LANGUAGE SWITCHER ── */
+        .lang-switcher {
+            position: relative;
+        }
+
+        .lang-btn {
+            width: auto;
+            min-width: 36px;
+            height: 36px;
+            background: var(--section-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text);
+            font-size: 0.78rem;
+            font-weight: 700;
+            gap: 4px;
+            padding: 0 10px;
+            transition: all .2s;
+        }
+
+        .lang-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .lang-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            min-width: 140px;
+            z-index: 2000;
+            overflow: hidden;
+            display: none;
+        }
+
+        [dir="rtl"] .lang-dropdown {
+            right: auto;
+            left: 0;
+        }
+
+        .lang-dropdown.open { display: block; }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            transition: background .15s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .lang-option:hover { background: var(--section-bg); }
+
+        .lang-option.active {
+            color: var(--primary);
+            background: rgba(38,115,91,0.08);
+        }
+
+        .lang-flag {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
 
         /* ── HERO ── */
         .hero {
@@ -290,7 +372,6 @@
             height: 100%;
         }
 
-
         .feature-icon-wrap {
             width: 52px; height: 52px;
             border-radius: 12px;
@@ -356,7 +437,6 @@
             gap: 8px;
         }
 
-
         /* ── FOOTER ── */
         .footer {
             background: linear-gradient(180deg, var(--section-bg) 0%, rgba(248, 250, 249, 0.95) 100%);
@@ -379,6 +459,11 @@
             letter-spacing: 0.3px;
             font-weight: 500;
         }
+
+        /* RTL adjustments */
+        [dir="rtl"] .hero p { margin-left: 0; margin-right: 0; }
+        [dir="rtl"] .hero::before { right: auto; left: -80px; }
+        [dir="rtl"] .hero::after { left: auto; right: -60px; }
     </style>
 </head>
 <body>
@@ -394,8 +479,29 @@
             <button class="theme-toggle-nav" onclick="toggleHomeTheme()" title="Mode sombre/clair">
                 <i class="bi bi-sun-fill" id="homeThemeIcon"></i>
             </button>
-            <a href="{% url 'login' %}" class="nav-btn-login">Se connecter</a>
-            <a href="{% url 'signup' %}" class="nav-btn-cta">Créer un compte</a>
+
+            <!-- Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn" onclick="toggleLangDropdown(event)" id="langBtn" title="Changer la langue">
+                    <i class="bi bi-globe2"></i>
+                    <span id="currentLangLabel">FR</span>
+                    <i class="bi bi-chevron-down" style="font-size:0.65rem;"></i>
+                </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-option active" data-lang="fr" onclick="setLanguage('fr')">
+                        <span class="lang-flag">🇫🇷</span> Français
+                    </button>
+                    <button class="lang-option" data-lang="en" onclick="setLanguage('en')">
+                        <span class="lang-flag">🇬🇧</span> English
+                    </button>
+                    <button class="lang-option" data-lang="ar" onclick="setLanguage('ar')">
+                        <span class="lang-flag">🇹🇳</span> العربية
+                    </button>
+                </div>
+            </div>
+
+            <a href="{% url 'login' %}" class="nav-btn-login" data-i18n="nav.login">Se connecter</a>
+            <a href="{% url 'signup' %}" class="nav-btn-cta" data-i18n="nav.signup">Créer un compte</a>
         </div>
     </div>
 </nav>
@@ -407,33 +513,33 @@
             <div class="col-lg-6">
                 <div class="hero-badge">
                     <i class="bi bi-stars"></i>
-                    Intelligence artificielle + OCR
+                    <span data-i18n="hero.badge">Intelligence artificielle + OCR</span>
                 </div>
                 <h1>
-                    Automatisez vos<br>
-                    <span>rapports de laboratoire</span>
+                    <span data-i18n="hero.title1">Automatisez vos</span><br>
+                    <span data-i18n="hero.title2">rapports de laboratoire</span>
                 </h1>
-                <p>DataLab PGH extrait, structure et analyse automatiquement vos rapports PDF avec l'IA. Fini la saisie manuelle.</p>
+                <p data-i18n="hero.desc">DataLab PGH extrait, structure et analyse automatiquement vos rapports PDF avec l'IA. Fini la saisie manuelle.</p>
                 <div class="hero-actions">
                     <a href="{% url 'signup' %}" class="btn-hero-primary">
-                        <i class="bi bi-rocket-takeoff"></i> Commencer gratuitement
+                        <i class="bi bi-rocket-takeoff"></i> <span data-i18n="hero.cta1">Commencer gratuitement</span>
                     </a>
                     <a href="{% url 'login' %}" class="btn-hero-secondary">
-                        <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                        <i class="bi bi-box-arrow-in-right"></i> <span data-i18n="hero.cta2">Se connecter</span>
                     </a>
                 </div>
                 <div class="hero-stats">
                     <div>
                         <div class="hero-stat-num">99%</div>
-                        <div class="hero-stat-label">Précision d'extraction</div>
+                        <div class="hero-stat-label" data-i18n="hero.stat1">Précision d'extraction</div>
                     </div>
                     <div>
                         <div class="hero-stat-num">10×</div>
-                        <div class="hero-stat-label">Plus rapide qu'à la main</div>
+                        <div class="hero-stat-label" data-i18n="hero.stat2">Plus rapide qu'à la main</div>
                     </div>
                     <div>
-                        <div class="hero-stat-num">PDF</div>
-                        <div class="hero-stat-label">Natif uniquement</div>
+                        <div class="hero-stat-num">OCR</div>
+                        <div class="hero-stat-label" data-i18n="hero.stat3">PDF & Images</div>
                     </div>
                 </div>
             </div>
@@ -443,29 +549,29 @@
                         <div class="hw-dot" style="background:#ef4444;"></div>
                         <div class="hw-dot" style="background:#f59e0b;"></div>
                         <div class="hw-dot" style="background:#26735B;"></div>
-                        <span style="color:rgba(255,255,255,0.6); font-size:.75rem; margin-left:8px;">DataLab PGH — Tableau de bord</span>
+                        <span style="color:rgba(255,255,255,0.6); font-size:.75rem; margin-left:8px;" data-i18n="visual.title">DataLab PGH — Tableau de bord</span>
                     </div>
                     <div class="hero-visual-body">
                         <div class="hw-row">
                             <i class="bi bi-file-earmark-pdf text-danger"></i>
                             <span style="font-size:.82rem; color:var(--text); flex:1;">Rapport_eau_sonede_2025.pdf</span>
-                            <span class="hw-badge" style="background:#d1f2e4; color:#0a5c36;">Terminé</span>
+                            <span class="hw-badge" style="background:#d1f2e4; color:#0a5c36;" data-i18n="visual.done">Terminé</span>
                         </div>
                         <div class="hw-row">
                             <i class="bi bi-file-earmark-pdf text-danger"></i>
                             <span style="font-size:.82rem; color:var(--text); flex:1;">Analyse_bache_cedria_2025.pdf</span>
-                            <span class="hw-badge" style="background:#d1f2e4; color:#0a5c36;">Terminé</span>
+                            <span class="hw-badge" style="background:#d1f2e4; color:#0a5c36;" data-i18n="visual.done">Terminé</span>
                         </div>
                         <div class="hw-row">
                             <i class="bi bi-file-earmark-pdf text-danger"></i>
                             <span style="font-size:.82rem; color:var(--text); flex:1;">Rapport_adoucisseur_saba.pdf</span>
-                            <span class="hw-badge" style="background:#fff3cd; color:#856404;">En attente</span>
+                            <span class="hw-badge" style="background:#fff3cd; color:#856404;" data-i18n="visual.pending">En attente</span>
                         </div>
                         <div style="margin-top:12px; padding:10px; background:rgba(38,115,91,0.08); border-radius:8px; border:1px solid rgba(38,115,91,0.2);">
                             <div style="font-size:.75rem; color:var(--primary); font-weight:600; margin-bottom:6px;">
-                                <i class="bi bi-cpu me-1"></i>DataLab IA
+                                <i class="bi bi-cpu me-1"></i><span data-i18n="visual.ai">DataLab IA</span>
                             </div>
-                            <div style="font-size:.78rem; color:var(--text-muted); line-height:1.5;">
+                            <div style="font-size:.78rem; color:var(--text-muted); line-height:1.5;" data-i18n="visual.analysis">
                                 « Les résultats d'analyse de l'eau montrent une conformité aux normes NT 09-14. Le pH est de 7.2 et la conductivité… »
                             </div>
                         </div>
@@ -480,9 +586,9 @@
 <section class="section-features">
     <div class="container">
         <div class="text-center mb-5">
-            <span class="section-badge">Fonctionnalités</span>
-            <h2 class="section-title-h2">Tout ce dont vous avez besoin</h2>
-            <p class="section-subtitle">Une plateforme complète pour la gestion des rapports de laboratoire.</p>
+            <span class="section-badge" data-i18n="features.badge">Fonctionnalités</span>
+            <h2 class="section-title-h2" data-i18n="features.title">Tout ce dont vous avez besoin</h2>
+            <p class="section-subtitle" data-i18n="features.subtitle">Une plateforme complète pour la gestion des rapports de laboratoire.</p>
         </div>
         <div class="row g-4">
             <div class="col-md-6 col-lg-3">
@@ -490,8 +596,8 @@
                     <div class="feature-icon-wrap" style="background:rgba(38,115,91,0.12);">
                         <i class="bi bi-file-earmark-pdf" style="color:var(--primary);"></i>
                     </div>
-                    <h5>Extraction PDF</h5>
-                    <p>Extrayez automatiquement le texte et les données de vos rapports PDF natifs avec une précision optimale.</p>
+                    <h5 data-i18n="feat1.title">Extraction OCR</h5>
+                    <p data-i18n="feat1.desc">Extrayez automatiquement les données de vos PDF natifs, scans et images grâce à la reconnaissance optique de caractères.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
@@ -499,8 +605,8 @@
                     <div class="feature-icon-wrap" style="background:rgba(245,158,11,0.12);">
                         <i class="bi bi-cpu-fill" style="color:#f59e0b;"></i>
                     </div>
-                    <h5>Assistant IA</h5>
-                    <p>Posez des questions sur vos rapports et obtenez des analyses intelligentes en temps réel grâce à l'IA.</p>
+                    <h5 data-i18n="feat2.title">Assistant IA</h5>
+                    <p data-i18n="feat2.desc">Posez des questions sur vos rapports et obtenez des analyses intelligentes en temps réel grâce à l'IA.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
@@ -508,8 +614,8 @@
                     <div class="feature-icon-wrap" style="background:rgba(59,130,246,0.12);">
                         <i class="bi bi-people" style="color:#3b82f6;"></i>
                     </div>
-                    <h5>Multi-utilisateurs</h5>
-                    <p>Gérez vos équipes par filiale avec des rôles administrateur et utilisateur distincts.</p>
+                    <h5 data-i18n="feat3.title">Multi-utilisateurs</h5>
+                    <p data-i18n="feat3.desc">Gérez vos équipes par filiale avec des rôles administrateur et utilisateur distincts.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
@@ -517,8 +623,8 @@
                     <div class="feature-icon-wrap" style="background:rgba(139,92,246,0.12);">
                         <i class="bi bi-graph-up" style="color:#8b5cf6;"></i>
                     </div>
-                    <h5>Suivi en temps réel</h5>
-                    <p>Suivez l'état de traitement de chaque rapport avec un historique complet des activités.</p>
+                    <h5 data-i18n="feat4.title">Suivi en temps réel</h5>
+                    <p data-i18n="feat4.desc">Suivez l'état de traitement de chaque rapport avec un historique complet des activités.</p>
                 </div>
             </div>
         </div>
@@ -529,30 +635,30 @@
 <section class="section-how">
     <div class="container">
         <div class="text-center mb-5">
-            <span class="section-badge">Processus</span>
-            <h2 class="section-title-h2">Comment ça marche ?</h2>
-            <p class="section-subtitle">Trois étapes simples pour transformer vos rapports en données exploitables.</p>
+            <span class="section-badge" data-i18n="how.badge">Processus</span>
+            <h2 class="section-title-h2" data-i18n="how.title">Comment ça marche ?</h2>
+            <p class="section-subtitle" data-i18n="how.subtitle">Trois étapes simples pour transformer vos rapports en données exploitables.</p>
         </div>
         <div class="row g-4 justify-content-center">
             <div class="col-md-4">
                 <div class="step-card">
                     <div class="step-number">1</div>
-                    <h5>Importez votre rapport</h5>
-                    <p>Glissez-déposez votre fichier PDF natif directement depuis votre ordinateur.</p>
+                    <h5 data-i18n="step1.title">Importez votre rapport</h5>
+                    <p data-i18n="step1.desc">Glissez-déposez votre PDF, image (JPG, PNG) ou scan directement depuis votre ordinateur.</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="step-card">
                     <div class="step-number">2</div>
-                    <h5>Extraction automatique</h5>
-                    <p>Notre moteur analyse et extrait automatiquement toutes les données du document PDF.</p>
+                    <h5 data-i18n="step2.title">Extraction automatique</h5>
+                    <p data-i18n="step2.desc">Notre moteur analyse et extrait automatiquement toutes les données du document PDF.</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="step-card">
                     <div class="step-number">3</div>
-                    <h5>Analysez avec l'IA</h5>
-                    <p>Interrogez votre assistant IA pour obtenir des insights et des analyses approfondies.</p>
+                    <h5 data-i18n="step3.title">Analysez avec l'IA</h5>
+                    <p data-i18n="step3.desc">Interrogez votre assistant IA pour obtenir des insights et des analyses approfondies.</p>
                 </div>
             </div>
         </div>
@@ -562,10 +668,10 @@
 <!-- ── CTA ── -->
 <section class="section-cta text-center">
     <div class="container">
-        <h2>Prêt à automatiser vos rapports ?</h2>
-        <p>Rejoignez les équipes de Poulina Group Holding qui font confiance à DataLab PGH.</p>
+        <h2 data-i18n="cta.title">Prêt à automatiser vos rapports ?</h2>
+        <p data-i18n="cta.desc">Rejoignez les équipes de Poulina Group Holding qui font confiance à DataLab PGH.</p>
         <a href="{% url 'signup' %}" class="btn-cta-white">
-            <i class="bi bi-rocket-takeoff"></i> Commencer maintenant
+            <i class="bi bi-rocket-takeoff"></i> <span data-i18n="cta.btn">Commencer maintenant</span>
         </a>
     </div>
 </section>
@@ -574,12 +680,13 @@
 <footer class="footer">
     <div class="container">
         <img src="{% static 'reports/images/logo.png' %}" alt="Poulina Group Holding"><br>
-        <p>© 2026 Poulina Group Holding. Tous droits réservés. — DataLab PGH</p>
+        <p data-i18n="footer.copy">© 2026 Poulina Group Holding. Tous droits réservés. — DataLab PGH</p>
     </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+/* ── THEME ── */
 const THEME_KEY = 'datalabTheme';
 
 function applyHomeTheme(theme) {
@@ -597,6 +704,190 @@ function toggleHomeTheme() {
 (function() {
     const saved = localStorage.getItem(THEME_KEY) || 'light';
     applyHomeTheme(saved);
+})();
+
+/* ── I18N ── */
+const LANG_KEY = 'datalabLang';
+
+const i18n = {
+    fr: {
+        'nav.login': 'Se connecter',
+        'nav.signup': 'Créer un compte',
+        'hero.badge': 'Intelligence artificielle + OCR',
+        'hero.title1': 'Automatisez vos',
+        'hero.title2': 'rapports de laboratoire',
+        'hero.desc': "DataLab PGH extrait, structure et analyse automatiquement vos rapports PDF avec l'IA. Fini la saisie manuelle.",
+        'hero.cta1': 'Commencer gratuitement',
+        'hero.cta2': 'Se connecter',
+        'hero.stat1': "Précision d'extraction",
+        'hero.stat2': "Plus rapide qu'à la main",
+        'hero.stat3': 'PDF & Images',
+        'visual.title': 'DataLab PGH — Tableau de bord',
+        'visual.done': 'Terminé',
+        'visual.pending': 'En attente',
+        'visual.ai': 'DataLab IA',
+        'visual.analysis': "« Les résultats d'analyse de l'eau montrent une conformité aux normes NT 09-14. Le pH est de 7.2 et la conductivité… »",
+        'features.badge': 'Fonctionnalités',
+        'features.title': 'Tout ce dont vous avez besoin',
+        'features.subtitle': 'Une plateforme complète pour la gestion des rapports de laboratoire.',
+        'feat1.title': 'Extraction OCR',
+        'feat1.desc': "Extrayez automatiquement les données de vos PDF natifs, scans et images grâce à la reconnaissance optique de caractères.",
+        'feat2.title': 'Assistant IA',
+        'feat2.desc': "Posez des questions sur vos rapports et obtenez des analyses intelligentes en temps réel grâce à l'IA.",
+        'feat3.title': 'Multi-utilisateurs',
+        'feat3.desc': 'Gérez vos équipes par filiale avec des rôles administrateur et utilisateur distincts.',
+        'feat4.title': 'Suivi en temps réel',
+        'feat4.desc': "Suivez l'état de traitement de chaque rapport avec un historique complet des activités.",
+        'how.badge': 'Processus',
+        'how.title': 'Comment ça marche ?',
+        'how.subtitle': 'Trois étapes simples pour transformer vos rapports en données exploitables.',
+        'step1.title': 'Importez votre rapport',
+        'step1.desc': 'Glissez-déposez votre PDF, image (JPG, PNG) ou scan directement depuis votre ordinateur.',
+        'step2.title': 'Extraction automatique',
+        'step2.desc': 'Notre moteur analyse et extrait automatiquement toutes les données du document PDF.',
+        'step3.title': "Analysez avec l'IA",
+        'step3.desc': "Interrogez votre assistant IA pour obtenir des insights et des analyses approfondies.",
+        'cta.title': 'Prêt à automatiser vos rapports ?',
+        'cta.desc': 'Rejoignez les équipes de Poulina Group Holding qui font confiance à DataLab PGH.',
+        'cta.btn': 'Commencer maintenant',
+        'footer.copy': '© 2026 Poulina Group Holding. Tous droits réservés. — DataLab PGH',
+    },
+    en: {
+        'nav.login': 'Sign in',
+        'nav.signup': 'Create account',
+        'hero.badge': 'Artificial Intelligence + OCR',
+        'hero.title1': 'Automate your',
+        'hero.title2': 'laboratory reports',
+        'hero.desc': 'DataLab PGH automatically extracts, structures and analyzes your PDF reports with AI. No more manual entry.',
+        'hero.cta1': 'Get started free',
+        'hero.cta2': 'Sign in',
+        'hero.stat1': 'Extraction accuracy',
+        'hero.stat2': 'Faster than manual',
+        'hero.stat3': 'PDF & Images',
+        'visual.title': 'DataLab PGH — Dashboard',
+        'visual.done': 'Done',
+        'visual.pending': 'Pending',
+        'visual.ai': 'DataLab AI',
+        'visual.analysis': '"Water analysis results show compliance with NT 09-14 standards. pH is 7.2 and conductivity…"',
+        'features.badge': 'Features',
+        'features.title': 'Everything you need',
+        'features.subtitle': 'A complete platform for laboratory report management.',
+        'feat1.title': 'OCR Extraction',
+        'feat1.desc': 'Automatically extract data from your native PDFs, scans and images using optical character recognition.',
+        'feat2.title': 'AI Assistant',
+        'feat2.desc': 'Ask questions about your reports and get intelligent real-time analyses powered by AI.',
+        'feat3.title': 'Multi-user',
+        'feat3.desc': 'Manage your teams by subsidiary with distinct administrator and user roles.',
+        'feat4.title': 'Real-time tracking',
+        'feat4.desc': 'Track the processing status of each report with a complete activity history.',
+        'how.badge': 'Process',
+        'how.title': 'How does it work?',
+        'how.subtitle': 'Three simple steps to turn your reports into actionable data.',
+        'step1.title': 'Upload your report',
+        'step1.desc': 'Drag and drop your PDF, image (JPG, PNG) or scan directly from your computer.',
+        'step2.title': 'Automatic extraction',
+        'step2.desc': 'Our engine automatically analyzes and extracts all data from the PDF document.',
+        'step3.title': 'Analyze with AI',
+        'step3.desc': 'Query your AI assistant for deep insights and comprehensive analyses.',
+        'cta.title': 'Ready to automate your reports?',
+        'cta.desc': 'Join Poulina Group Holding teams that trust DataLab PGH.',
+        'cta.btn': 'Get started now',
+        'footer.copy': '© 2026 Poulina Group Holding. All rights reserved. — DataLab PGH',
+    },
+    ar: {
+        'nav.login': 'تسجيل الدخول',
+        'nav.signup': 'إنشاء حساب',
+        'hero.badge': 'الذكاء الاصطناعي + OCR',
+        'hero.title1': 'أتمتة',
+        'hero.title2': 'تقارير المختبر',
+        'hero.desc': 'يقوم DataLab PGH تلقائيًا باستخراج وتنظيم وتحليل تقارير PDF بالذكاء الاصطناعي. وداعًا للإدخال اليدوي.',
+        'hero.cta1': 'ابدأ مجانًا',
+        'hero.cta2': 'تسجيل الدخول',
+        'hero.stat1': 'دقة الاستخراج',
+        'hero.stat2': 'أسرع من اليدوي',
+        'hero.stat3': 'PDF والصور',
+        'visual.title': 'DataLab PGH — لوحة التحكم',
+        'visual.done': 'مكتمل',
+        'visual.pending': 'قيد الانتظار',
+        'visual.ai': 'DataLab الذكاء الاصطناعي',
+        'visual.analysis': '«تُظهر نتائج تحليل المياه امتثالاً لمعايير NT 09-14. درجة الحموضة 7.2 والتوصيلية…»',
+        'features.badge': 'المميزات',
+        'features.title': 'كل ما تحتاجه',
+        'features.subtitle': 'منصة متكاملة لإدارة تقارير المختبر.',
+        'feat1.title': 'استخراج OCR',
+        'feat1.desc': 'استخرج البيانات تلقائيًا من ملفات PDF والمسح الضوئي والصور باستخدام التعرف الضوئي على الحروف.',
+        'feat2.title': 'مساعد الذكاء الاصطناعي',
+        'feat2.desc': 'اطرح أسئلة حول تقاريرك واحصل على تحليلات ذكية في الوقت الفعلي بفضل الذكاء الاصطناعي.',
+        'feat3.title': 'متعدد المستخدمين',
+        'feat3.desc': 'أدر فرقك حسب الفروع بأدوار مسؤول ومستخدم مختلفة.',
+        'feat4.title': 'تتبع في الوقت الفعلي',
+        'feat4.desc': 'تابع حالة معالجة كل تقرير مع سجل كامل للأنشطة.',
+        'how.badge': 'العملية',
+        'how.title': 'كيف يعمل؟',
+        'how.subtitle': 'ثلاث خطوات بسيطة لتحويل تقاريرك إلى بيانات قابلة للتنفيذ.',
+        'step1.title': 'ارفع تقريرك',
+        'step1.desc': 'اسحب وأفلت ملف PDF أو صورة (JPG, PNG) أو مسح ضوئي مباشرة من جهازك.',
+        'step2.title': 'استخراج تلقائي',
+        'step2.desc': 'يحلل محركنا ويستخرج تلقائيًا جميع البيانات من مستند PDF.',
+        'step3.title': 'حلل مع الذكاء الاصطناعي',
+        'step3.desc': 'استشر مساعد الذكاء الاصطناعي للحصول على رؤى عميقة وتحليلات شاملة.',
+        'cta.title': 'هل أنت مستعد لأتمتة تقاريرك؟',
+        'cta.desc': 'انضم إلى فرق مجموعة بولينا التي تثق بـ DataLab PGH.',
+        'cta.btn': 'ابدأ الآن',
+        'footer.copy': '© 2026 Poulina Group Holding. جميع الحقوق محفوظة. — DataLab PGH',
+    }
+};
+
+const langMeta = {
+    fr: { label: 'FR', dir: 'ltr', htmlLang: 'fr' },
+    en: { label: 'EN', dir: 'ltr', htmlLang: 'en' },
+    ar: { label: 'ع',  dir: 'rtl', htmlLang: 'ar' },
+};
+
+function applyLanguage(lang) {
+    const dict = i18n[lang];
+    if (!dict) return;
+    const meta = langMeta[lang];
+
+    document.documentElement.setAttribute('lang', meta.htmlLang);
+    document.documentElement.setAttribute('dir', meta.dir);
+    document.getElementById('currentLangLabel').textContent = meta.label;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key] !== undefined) el.textContent = dict[key];
+    });
+
+    document.querySelectorAll('.lang-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+
+    localStorage.setItem(LANG_KEY, lang);
+}
+
+function setLanguage(lang) {
+    applyLanguage(lang);
+    closeLangDropdown();
+}
+
+function toggleLangDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('langDropdown').classList.toggle('open');
+}
+
+function closeLangDropdown() {
+    document.getElementById('langDropdown').classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('langSwitcher').contains(e.target)) {
+        closeLangDropdown();
+    }
+});
+
+(function() {
+    const saved = localStorage.getItem(LANG_KEY) || 'fr';
+    applyLanguage(saved);
 })();
 </script>
 </body>

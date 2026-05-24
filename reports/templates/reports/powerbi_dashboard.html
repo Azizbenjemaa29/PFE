@@ -1,0 +1,121 @@
+{% extends "reports/base_dashboard.html" %}
+{% load static i18n %}
+
+{% block title %}Dashboard Power BI{% endblock %}
+
+{% block extra_css %}
+.powerbi-wrapper {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - var(--topbar-height) - 80px);
+    min-height: 500px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+}
+
+.powerbi-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+.powerbi-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 20px;
+    color: var(--text-muted);
+    padding: 40px;
+    text-align: center;
+}
+
+.powerbi-placeholder .placeholder-icon {
+    font-size: 4rem;
+    color: var(--primary);
+    opacity: 0.5;
+}
+
+.powerbi-placeholder h5 {
+    color: var(--text);
+    font-weight: 600;
+    margin: 0;
+}
+
+.powerbi-placeholder p {
+    font-size: 0.875rem;
+    max-width: 420px;
+    margin: 0;
+}
+
+.powerbi-placeholder code {
+    background: var(--hover-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    color: var(--primary);
+}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-1" style="color: var(--text);">
+            <i class="bi bi-bar-chart-line me-2" style="color: var(--primary);"></i>
+            Dashboard Power BI
+        </h4>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">
+            Tableau de bord analytique — Poulina Group Holding
+        </p>
+    </div>
+    <a href="{% url 'reports:dashboard' %}" class="btn-outline-custom d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="powerbi-wrapper">
+
+    {# ── URL POWER BI EMBED (public — aucune connexion requise) ── #}
+    {% with powerbi_url="https://app.powerbi.com/view?r=eyJrIjoiM2ZhZDkwMDEtNDBiZC00NDExLThkN2QtMGIyOThiMDExZDU3IiwidCI6ImRiZDY2NjRkLTRlYjktNDZlYi05OWQ4LTVjNDNiYTE1M2M2MSIsImMiOjl9" %}
+
+    {% if powerbi_url %}
+        <div id="pbiLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--card-bg);z-index:2;flex-direction:column;gap:12px;">
+            <div class="spinner-border" style="color:var(--primary);width:2rem;height:2rem;" role="status"></div>
+            <span style="font-size:0.85rem;color:var(--text-muted);">Chargement du dashboard…</span>
+        </div>
+        <iframe
+            id="pbiFrame"
+            class="powerbi-iframe"
+            src="{{ powerbi_url }}"
+            allowfullscreen
+            title="Dashboard Power BI — Poulina Group Holding"
+            onload="document.getElementById('pbiLoading').style.display='none'">
+        </iframe>
+    {% else %}
+        <div class="powerbi-placeholder">
+            <i class="bi bi-bar-chart-line placeholder-icon"></i>
+            <h5>Dashboard Power BI non configuré</h5>
+            <p>
+                Publie ton rapport dans <strong>Power BI Service</strong>, puis remplace la valeur de
+                <code>powerbi_url</code> dans le template
+                <code>reports/powerbi_dashboard.html</code> par ton URL d'intégration.
+            </p>
+            <div class="mt-2" style="font-size: 0.8rem; color: var(--text-muted);">
+                <strong>Étapes :</strong><br>
+                1. Ouvre ton rapport dans Power BI Service<br>
+                2. Fichier → Incorporer le rapport → Publier sur le web (public)<br>
+                3. Copie l'URL <code>https://app.powerbi.com/view?r=eyJr...</code>
+            </div>
+        </div>
+    {% endif %}
+
+    {% endwith %}
+
+</div>
+{% endblock %}

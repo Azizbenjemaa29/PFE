@@ -10,8 +10,10 @@ urlpatterns = [
     path('delete/<int:pk>/', views.delete_report, name='delete_report'),
     path('approve/<int:pk>/', views.approve_report, name='approve_report'),
     path('refuse/<int:pk>/', views.refuse_report, name='refuse_report'),
+    path('powerbi/', views.powerbi_dashboard, name='powerbi_dashboard'),
     path('users/', views.manage_users, name='manage_users'),
     path('users/password/<int:pk>/', views.change_user_password, name='change_user_password'),
     path('profil/', views.profil, name='profil'),
     path('pdf/<int:pk>/', views.serve_pdf, name='serve_pdf'),
+    path('detail/<int:pk>/json/', views.report_detail_json, name='report_detail_json'),
 ]

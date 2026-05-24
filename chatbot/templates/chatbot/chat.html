@@ -9,19 +9,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-primary:   #0d1117;
-            --bg-secondary: #161b22;
-            --bg-hover:     #21262d;
-            --border:       #30363d;
-            --text-primary: #e6edf3;
-            --text-secondary:#c9d1d9;
-            --text-muted:   #8b949e;
-            --text-dim:     #484f58;
+            --bg-primary:   #f0f5f2;
+            --bg-secondary: #ffffff;
+            --bg-hover:     #f0f9f5;
+            --border:       #dde8e3;
+            --text-primary: #1a2e26;
+            --text-secondary:#1a2e26;
+            --text-muted:   #6c7c74;
+            --text-dim:     #9aaba3;
             --accent:       #26735B;
             --accent-hover: #2fa67a;
-            --accent-light: rgba(38,115,91,.15);
+            --accent-light: rgba(38,115,91,.10);
             --user-bubble:  #26735B;
-            --danger:       #f85149;
+            --danger:       #ef4444;
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -144,7 +144,7 @@
             transition: background .12s;
             color: var(--text-secondary);
         }
-        .conv-item.active { background: var(--accent-light); color: #4ade80; border-left: 2px solid var(--accent); padding-left: 8px; }
+        .conv-item.active { background: var(--accent-light); color: var(--accent); border-left: 2px solid var(--accent); padding-left: 8px; }
         .conv-item-icon { font-size: 12px; flex-shrink: 0; opacity: .6; }
         .conv-item-text {
             flex: 1;
@@ -249,7 +249,7 @@
             border: 1px solid rgba(38,115,91,.35);
             border-radius: 20px;
             font-size: 10px;
-            color: #4ade80;
+            color: var(--accent);
             white-space: nowrap;
             flex-shrink: 0;
         }
@@ -398,7 +398,7 @@
             cursor: pointer;
             transition: all .12s;
         }
-        .msg-action-btn.copied { color: #4ade80; }
+        .msg-action-btn.copied { color: var(--accent); }
 
         /* Markdown dans les bulles assistant */
         .bubble h1, .bubble h2, .bubble h3, .bubble h4 {
@@ -412,15 +412,15 @@
         .bubble li { margin-bottom: 3px; }
         .bubble strong { color: var(--text-primary); }
         .bubble code {
-            background: var(--bg-primary);
-            color: #79c0ff;
+            background: #eef3f0;
+            color: #1a5c47;
             padding: 2px 5px;
             border-radius: 4px;
             font-size: 12px;
             font-family: 'Cascadia Code', 'Fira Code', monospace;
         }
         .bubble pre {
-            background: var(--bg-primary);
+            background: #eef3f0;
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 12px;
@@ -430,7 +430,7 @@
         .bubble pre code { background: none; padding: 0; font-size: 12px; }
         .bubble table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
         .bubble th {
-            background: var(--bg-hover);
+            background: #eef3f0;
             color: var(--text-primary);
             padding: 7px 10px;
             text-align: left;
@@ -441,14 +441,14 @@
             padding: 6px 10px;
             border: 1px solid var(--border);
         }
-        .bubble tr:nth-child(even) td { background: var(--bg-secondary); }
+        .bubble tr:nth-child(even) td { background: #f8faf9; }
         .bubble blockquote {
             border-left: 3px solid var(--accent);
             padding-left: 12px;
             color: var(--text-muted);
             margin: 8px 0;
         }
-        .bubble a { color: #4ade80; }
+        .bubble a { color: var(--accent); }
 
         /* SQL toggle */
         .sql-toggle {
@@ -461,7 +461,7 @@
             border: 1px solid rgba(38,115,91,.35);
             border-radius: 5px;
             font-size: 11px;
-            color: #4ade80;
+            color: var(--accent);
             cursor: pointer;
             transition: all .12s;
         }
@@ -474,7 +474,7 @@
             border-radius: 6px;
             font-family: 'Cascadia Code', monospace;
             font-size: 11px;
-            color: #79c0ff;
+            color: #1a5c47;
             white-space: pre-wrap;
         }
 
@@ -1129,11 +1129,11 @@ function renderChart(chartData, container) {
     const isBar   = type === 'bar';
 
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'margin-top:16px;background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:18px;position:relative;';
+    wrap.style.cssText = 'margin-top:16px;background:#ffffff;border:1px solid #dde8e3;border-radius:12px;padding:18px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.06);';
 
     const badge = document.createElement('span');
     badge.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-    badge.style.cssText = 'position:absolute;top:10px;right:12px;font-size:10px;color:#484f58;background:#21262d;padding:2px 8px;border-radius:10px;';
+    badge.style.cssText = 'position:absolute;top:10px;right:12px;font-size:10px;color:#6c7c74;background:#f0f5f2;padding:2px 8px;border-radius:10px;';
     wrap.appendChild(badge);
 
     const canvas = document.createElement('canvas');
@@ -1169,19 +1169,19 @@ function renderChart(chartData, container) {
             maintainAspectRatio: true,
             animation: { duration: 700, easing: 'easeInOutQuart' },
             plugins: {
-                title: { display: !!chartData.title, text: chartData.title || '', color: '#e6edf3', font: { size: 13, weight: 'bold', family: 'inherit' }, padding: { bottom: 14 } },
-                legend: { position: isPie ? 'right' : 'top', labels: { color: '#c9d1d9', font: { size: 11 }, padding: 14, usePointStyle: true, pointStyleWidth: 10 } },
+                title: { display: !!chartData.title, text: chartData.title || '', color: '#1a2e26', font: { size: 13, weight: 'bold', family: 'inherit' }, padding: { bottom: 14 } },
+                legend: { position: isPie ? 'right' : 'top', labels: { color: '#1a2e26', font: { size: 11 }, padding: 14, usePointStyle: true, pointStyleWidth: 10 } },
                 tooltip: {
-                    backgroundColor: '#21262d', titleColor: '#e6edf3', bodyColor: '#c9d1d9',
-                    borderColor: '#30363d', borderWidth: 1, padding: 10, cornerRadius: 8,
+                    backgroundColor: '#ffffff', titleColor: '#1a2e26', bodyColor: '#6c7c74',
+                    borderColor: '#dde8e3', borderWidth: 1, padding: 10, cornerRadius: 8,
                     callbacks: { label: ctx => { const val = ctx.parsed.y ?? ctx.parsed ?? ctx.raw; return ` ${ctx.dataset.label || ''}: ${typeof val === 'number' ? val.toLocaleString('fr-FR') : val}`; } }
                 },
             },
             scales: (isPie || isRadar) ? (isRadar ? {
-                r: { grid: { color: '#30363d' }, ticks: { color: '#8b949e', backdropColor: 'transparent', font: { size: 9 } }, pointLabels: { color: '#c9d1d9', font: { size: 10 } } }
+                r: { grid: { color: '#dde8e3' }, ticks: { color: '#6c7c74', backdropColor: 'transparent', font: { size: 9 } }, pointLabels: { color: '#1a2e26', font: { size: 10 } } }
             } : {}) : {
-                x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' } },
-                y: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' }, beginAtZero: true },
+                x: { ticks: { color: '#6c7c74', font: { size: 10 } }, grid: { color: '#f0f5f2' } },
+                y: { ticks: { color: '#6c7c74', font: { size: 10 } }, grid: { color: '#f0f5f2' }, beginAtZero: true },
             },
         },
     });

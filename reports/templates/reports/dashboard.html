@@ -49,6 +49,16 @@
     flex-shrink: 0;
 }
 
+.drop-zone.has-files {
+    border-color: var(--primary);
+    background: var(--primary-alpha);
+}
+
+.drop-zone.has-files .upload-icon,
+.drop-zone.has-files > p {
+    display: none;
+}
+
 .filter-bar {
     background: var(--card-bg);
     border-radius: var(--radius);
@@ -132,7 +142,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6">
+            <div class="{% if is_admin %}col-6{% else %}col-6 offset-3{% endif %}">
                 <div class="stat-card">
                     <div class="stat-icon" style="background:rgba(245,158,11,0.12);">
                         <i class="bi bi-hourglass-split" style="color:#f59e0b;"></i>
@@ -143,8 +153,8 @@
                     </div>
                 </div>
             </div>
+            {% if is_admin %}
             <div class="col-6">
-                {% if is_admin %}
                 <div class="stat-card">
                     <div class="stat-icon" style="background:rgba(139,92,246,0.12);">
                         <i class="bi bi-people" style="color:#8b5cf6;"></i>
@@ -154,18 +164,8 @@
                         <div class="stat-label">{% trans "Utilisateurs" %}</div>
                     </div>
                 </div>
-                {% else %}
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:rgba(59,130,246,0.12);">
-                        <i class="bi bi-arrow-repeat" style="color:#3b82f6;"></i>
-                    </div>
-                    <div>
-                        <div class="stat-num">{{ processing_count }}</div>
-                        <div class="stat-label">{% trans "En traitement" %}</div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -177,19 +177,22 @@
         <i class="bi bi-file-earmark-arrow-up me-2"></i>{% trans "Extraction PDF" %}
     </h5>
     <p style="color:var(--text-muted); font-size:.82rem; margin-bottom:18px;">
-        {% trans "Téléchargez un rapport PDF natif pour extraire automatiquement les données." %}
+        {% trans "Téléchargez un PDF, une image ou un scan — l'OCR extrait automatiquement les données." %}
     </p>
     <form method="post" action="{% url 'reports:upload_report' %}" enctype="multipart/form-data" id="ocr-form">
         {% csrf_token %}
         <div class="row g-3">
             <div class="col-md-8">
                 <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-                    <div class="upload-icon"><i class="bi bi-file-earmark-pdf"></i></div>
+                    <div class="upload-icon">
+                        <i class="bi bi-file-earmark-pdf" style="color:#ef4444;"></i>
+                        <i class="bi bi-file-earmark-image" style="color:var(--primary); font-size:2rem; margin-left:-8px;"></i>
+                    </div>
                     <p><strong>{% trans "Cliquez ou glissez-déposez" %}</strong> {% trans "vos fichiers ici" %}</p>
-                    <p style="margin-top:4px;"><small>{% trans "PDF natif uniquement — max. 25 MB / fichier — 10 fichiers max" %}</small></p>
+                    <p style="margin-top:4px;"><small>{% trans "PDF, Images (JPG, PNG, WebP) — max. 25 MB / fichier — 10 fichiers max" %}</small></p>
                     <div class="file-list-preview" id="file-label" style="display:none;"></div>
-                    <input type="file" name="file" id="file-input" accept=".pdf"
-                        style="display:none;" multiple required>
+                    <input type="file" name="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                        style="display:none;" multiple required onchange="dzHandleChange(this)">
                 </div>
             </div>
             <div class="col-md-4 d-flex flex-column gap-2">
@@ -251,7 +254,7 @@
 {% endif %}
 
 <!-- REPORTS TABLE -->
-<div class="reports-card">
+<div class="reports-card" id="reports-table">
     <div class="card-header-bar">
         <strong style="font-size:.9rem; color:var(--text);">
             <i class="bi bi-table me-2" style="color:var(--primary);"></i>
@@ -314,6 +317,14 @@
                             onclick="openPdfViewer(this)">
                             <i class="bi bi-eye"></i>
                         </button>
+                        {% if report.status == 'COMPLETED' %}
+                        <button type="button" class="btn-view-pdf" title="{% trans 'Détail extraction' %}"
+                            style="color:#26735B;"
+                            data-detail-url="{% url 'reports:report_detail_json' report.pk %}"
+                            onclick="openReportDetail(this)">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </button>
+                        {% endif %}
                         {% if is_admin and report.status == 'PENDING' %}
                         <form action="{% url 'reports:approve_report' report.pk %}" method="post" class="d-inline"
                             onsubmit="return confirm('{% trans "Approuver et lancer l\'extraction ?" %}');">
@@ -356,6 +367,70 @@
     {% endif %}
 </div>
 
+<!-- ── MODAL DÉTAIL RAPPORT ── -->
+<div class="modal fade" id="reportDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:var(--radius-lg); overflow:hidden;">
+            <div class="modal-header" style="background:var(--primary-dark); color:#fff; border-bottom:0;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text" style="font-size:1.2rem;"></i>
+                    <span id="rdModalTitle" style="font-weight:600; font-size:.95rem;">Détail du rapport</span>
+                </div>
+                <div class="d-flex gap-2 ms-auto align-items-center">
+                    <button type="button" onclick="printReportDetail()" class="btn btn-sm"
+                        style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px;">
+                        <i class="bi bi-printer me-1"></i> Imprimer / PDF
+                    </button>
+                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0" style="background:var(--bg);">
+                <div id="rdContent" style="padding:28px 32px;">
+                    <div id="rdPrintZone">
+                        <!-- En-tête document -->
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:14px; border-bottom:2px solid var(--primary);">
+                            <div>
+                                <div style="font-size:1.15rem; font-weight:700; color:var(--primary);" id="rdTitle"></div>
+                                <div style="font-size:.78rem; color:var(--text-muted); margin-top:3px;" id="rdFilename"></div>
+                            </div>
+                            <div style="text-align:right; font-size:.78rem; color:var(--text-muted);">
+                                <div>Rapport d'analyse</div>
+                                <div id="rdDate" style="font-weight:600; color:var(--text);"></div>
+                            </div>
+                        </div>
+                        <!-- Informations générales -->
+                        <div style="background:var(--card-bg); border-radius:var(--radius); border:1px solid var(--border); padding:18px 22px; margin-bottom:20px;">
+                            <div style="font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--primary); margin-bottom:14px;">
+                                <i class="bi bi-info-circle me-1"></i> Informations générales
+                            </div>
+                            <div class="row g-2" id="rdHeaderGrid"></div>
+                        </div>
+                        <!-- Tableau des résultats -->
+                        <div style="background:var(--card-bg); border-radius:var(--radius); border:1px solid var(--border); padding:18px 22px;">
+                            <div style="font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--primary); margin-bottom:14px;">
+                                <i class="bi bi-table me-1"></i> Résultats des essais
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" style="font-size:.85rem;">
+                                    <thead style="background:var(--table-header-bg);">
+                                        <tr>
+                                            <th class="ps-3" style="color:var(--text-muted); font-weight:600; font-size:.75rem; text-transform:uppercase;">#</th>
+                                            <th style="color:var(--text-muted); font-weight:600; font-size:.75rem; text-transform:uppercase;">Essai</th>
+                                            <th style="color:var(--text-muted); font-weight:600; font-size:.75rem; text-transform:uppercase;">Méthode</th>
+                                            <th style="color:var(--text-muted); font-weight:600; font-size:.75rem; text-transform:uppercase;">Résultat</th>
+                                            <th style="color:var(--text-muted); font-weight:600; font-size:.75rem; text-transform:uppercase;">Unité</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rdResultatsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block right_sidebar %}{% endblock %}
@@ -387,61 +462,101 @@
 
 {% if not is_admin %}
 <script>
-// ── FILE UPLOAD ──
+/* ── DROP ZONE : global function called by onchange on the input ── */
+function dzHandleChange(input) {
+    var MAX_SIZE  = 25 * 1024 * 1024;
+    var MAX_FILES = 10;
+    var dropZone  = document.getElementById('drop-zone');
+    var fileLabel = document.getElementById('file-label');
+    if (!dropZone || !fileLabel) return;
+
+    var files = Array.from(input.files);
+    if (!files.length) return;
+
+    /* validate */
+    var valid = [];
+    for (var i = 0; i < files.length; i++) {
+        var f = files[i];
+        var ext = '.' + f.name.split('.').pop().toLowerCase();
+        if (['.pdf','.jpg','.jpeg','.png','.gif','.webp'].indexOf(ext) === -1) {
+            alert(f.name + ' : format non supporté (PDF, JPG, PNG, WebP).'); continue;
+        }
+        if (f.size > MAX_SIZE) { alert(f.name + ' : fichier trop volumineux (max 25 MB).'); continue; }
+        valid.push(f);
+    }
+    if (!valid.length) return;
+    if (valid.length > MAX_FILES) { alert('Maximum ' + MAX_FILES + ' fichiers.'); return; }
+
+    /* hide placeholder icons & text */
+    var icon = dropZone.querySelector('.upload-icon');
+    var ps   = dropZone.querySelectorAll('p');
+    if (icon) icon.style.display = 'none';
+    for (var j = 0; j < ps.length; j++) ps[j].style.display = 'none';
+
+    /* restyle drop zone */
+    dropZone.style.borderColor  = '#26735B';
+    dropZone.style.borderStyle  = 'solid';
+    dropZone.style.background   = 'rgba(38,115,91,0.07)';
+
+    /* show file list */
+    var html = '<div style="font-size:1rem;font-weight:700;color:#26735B;margin-bottom:10px;">'
+             + '<i class="bi bi-check-circle-fill me-2"></i>' + valid.length + ' fichier(s) prêt(s)</div>';
+    for (var k = 0; k < valid.length; k++) {
+        var fk   = valid[k];
+        var size = fk.size > 1048576
+            ? (fk.size / 1048576).toFixed(1) + ' MB'
+            : Math.round(fk.size / 1024) + ' KB';
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;'
+              + 'background:#fff;border:1px solid #d1e8df;border-radius:8px;margin-bottom:6px;">'
+              + '<i class="bi bi-file-earmark-pdf" style="color:#ef4444;font-size:1.1rem;flex-shrink:0;"></i>'
+              + '<span style="font-size:.85rem;font-weight:600;color:#1a2e26;flex:1;word-break:break-all;">' + fk.name + '</span>'
+              + '<span style="font-size:.75rem;color:#6c7c74;flex-shrink:0;">' + size + '</span></div>';
+    }
+    fileLabel.innerHTML = html;
+    fileLabel.style.display = 'block';
+}
+
+/* ── DRAG & DROP ── */
 (function() {
-    var dropZone    = document.getElementById('drop-zone');
-    var fileInput   = document.getElementById('file-input');
-    var fileLabel   = document.getElementById('file-label');
-    var extractToggle = document.getElementById('extract-toggle');
-    var extractHint = document.getElementById('extract-hint');
-    var submitBtn   = document.getElementById('submit-btn');
-    var ocrForm     = document.getElementById('ocr-form');
+    var dropZone  = document.getElementById('drop-zone');
+    var fileInput = document.getElementById('file-input');
     if (!dropZone || !fileInput) return;
 
-    var MAX_FILES = 10, MAX_SIZE = 25 * 1024 * 1024;
-
-    function renderFileList() {
-        var files = Array.from(fileInput.files);
-        if (!files.length) { fileLabel.style.display = 'none'; return; }
-        fileLabel.innerHTML = '<i class="bi bi-paperclip me-1"></i>' + files.length + ' fichier(s) sélectionné(s)';
-        fileLabel.style.display = 'block';
-    }
-
-    function applyFiles(fileArray) {
-        var valid = [];
-        fileArray.forEach(function(f) {
-            var ext = '.' + f.name.split('.').pop().toLowerCase();
-            if (ext !== '.pdf') { alert(f.name + ' : PDF uniquement.'); return; }
-            if (f.size > MAX_SIZE) { alert(f.name + ' : dépasse 25 MB'); return; }
-            valid.push(f);
-        });
-        if (valid.length > MAX_FILES) { alert('Maximum ' + MAX_FILES + ' fichiers.'); return; }
-        var dt = new DataTransfer();
-        valid.forEach(function(f) { dt.items.add(f); });
-        fileInput.files = dt.files;
-        renderFileList();
-    }
-
-    fileInput.addEventListener('change', function() { applyFiles(Array.from(fileInput.files)); });
-    dropZone.addEventListener('dragover',  function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
-    dropZone.addEventListener('dragleave', function()  { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#26735B';
+    });
+    dropZone.addEventListener('dragleave', function() {
+        if (!fileInput.files.length) dropZone.style.borderColor = '';
+    });
     dropZone.addEventListener('drop', function(e) {
-        e.preventDefault(); dropZone.classList.remove('dragover');
-        applyFiles(Array.from(e.dataTransfer.files));
+        e.preventDefault();
+        var dt = new DataTransfer();
+        Array.from(e.dataTransfer.files).forEach(function(f) { dt.items.add(f); });
+        fileInput.files = dt.files;
+        dzHandleChange(fileInput);
     });
 
+    /* extract toggle */
+    var extractToggle = document.getElementById('extract-toggle');
+    var extractHint   = document.getElementById('extract-hint');
+    var submitBtn     = document.getElementById('submit-btn');
     if (extractToggle) {
         extractToggle.addEventListener('change', function() {
-            if (extractToggle.checked) {
-                if (extractHint) extractHint.textContent = '{% trans "Le rapport sera traité immédiatement." %}';
-                if (submitBtn)   submitBtn.innerHTML = '<i class="bi bi-cpu me-1"></i> {% trans "Lancer l\'extraction" %}';
-            } else {
-                if (extractHint) extractHint.textContent = '{% trans "Le rapport sera envoyé à l\'admin pour validation." %}';
-                if (submitBtn)   submitBtn.innerHTML = '<i class="bi bi-send me-1"></i> {% trans "Envoyer à l\'admin" %}';
+            var isExtract = extractToggle.checked;
+            if (extractHint) extractHint.textContent = isExtract
+                ? 'Le rapport sera traite immediatement.'
+                : "Le rapport sera envoye a l'admin pour validation.";
+            if (submitBtn) {
+                var icon = isExtract ? 'cpu' : 'send';
+                var label = isExtract ? "Lancer l'extraction" : "Envoyer a l'admin";
+                submitBtn.innerHTML = '<i class="bi bi-' + icon + ' me-1"></i> ' + label;
             }
         });
     }
 
+    /* progress bar on submit */
+    var ocrForm = document.getElementById('ocr-form');
     if (ocrForm) {
         ocrForm.addEventListener('submit', function() {
             document.getElementById('ocr-progress').style.display = 'block';
@@ -456,33 +571,207 @@
             }, 250);
         });
     }
+
+    /* scroll to table after upload */
+    if (new URLSearchParams(window.location.search).get('uploaded')) {
+        var tbl = document.getElementById('reports-table');
+        if (tbl) setTimeout(function() { tbl.scrollIntoView({behavior:'smooth', block:'start'}); }, 300);
+        history.replaceState(null, '', window.location.pathname);
+    }
 })();
 </script>
 {% endif %}
 
+<script>
+function openReportDetail(btn) {
+    var url      = btn.getAttribute('data-detail-url');
+    var origHTML = btn.innerHTML;
+
+    /* spinner sur le bouton pendant le fetch */
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="color:var(--primary); width:.9rem; height:.9rem; border-width:2px;"></span>';
+    btn.disabled  = true;
+
+    fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            btn.innerHTML = origHTML;
+            btn.disabled  = false;
+            if (d.error) return; /* données absentes : ne rien faire */
+
+            document.getElementById('rdModalTitle').textContent = d.title;
+            document.getElementById('rdTitle').textContent      = d.title;
+            document.getElementById('rdFilename').textContent   = d.filename;
+            document.getElementById('rdDate').textContent       = d.uploaded_at;
+
+            var labels = {
+                client: 'Client', date_emission: "Date d'émission", ose: "Objet soumis à l'essai",
+                code: 'Code', bon_de_commande: 'Bon de commande N°',
+                nature_echantillon: "Nature de l'échantillon",
+                transport_par: 'Transport par', date_prelevement: 'Date de prélèvement',
+                date_reception: 'Date de réception', date_debut_essais: 'Début des essais',
+                responsable_laboratoire: 'Responsable laboratoire'
+            };
+            var grid = document.getElementById('rdHeaderGrid');
+            grid.innerHTML = '';
+            Object.keys(labels).forEach(function(k) {
+                var v = d.header[k];
+                if (!v) return;
+                grid.innerHTML += '<div class="col-md-4 col-6">'
+                    + '<div style="font-size:.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:2px;">' + labels[k] + '</div>'
+                    + '<div style="font-size:.85rem; color:var(--text); font-weight:500;">' + v + '</div>'
+                    + '</div>';
+            });
+
+            var tbody = document.getElementById('rdResultatsBody');
+            tbody.innerHTML = '';
+            if (d.resultats && d.resultats.length) {
+                d.resultats.forEach(function(r, i) {
+                    tbody.innerHTML += '<tr>'
+                        + '<td class="ps-3" style="color:var(--text-muted);">' + (i + 1) + '</td>'
+                        + '<td style="font-weight:500; color:var(--text);">' + (r.essai || '—') + '</td>'
+                        + '<td style="color:var(--text-muted);">' + (r.methode_essai || '—') + '</td>'
+                        + '<td><span style="font-weight:700; color:var(--primary);">' + (r.resultat || '—') + '</span></td>'
+                        + '<td style="color:var(--text-muted);">' + (r.unite || '—') + '</td>'
+                        + '</tr>';
+                });
+            }
+
+            /* ouvre le modal seulement quand les données sont injectées */
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('reportDetailModal')).show();
+        })
+        .catch(function() {
+            btn.innerHTML = origHTML;
+            btn.disabled  = false;
+        });
+}
+
+function printReportDetail() {
+    var title    = document.getElementById('rdTitle').textContent;
+    var filename = document.getElementById('rdFilename').textContent;
+    var date     = document.getElementById('rdDate').textContent;
+
+    /* collect header fields */
+    var headerRows = '';
+    var labels = {
+        client: 'Client', date_emission: "Date d'émission", ose: "Objet soumis à l'essai",
+        code: 'Code', bon_de_commande: 'Bon de commande N°',
+        nature_echantillon: "Nature de l'échantillon",
+        transport_par: 'Transport par', date_prelevement: 'Date de prélèvement',
+        date_reception: 'Date de réception', date_debut_essais: 'Début des essais',
+        responsable_laboratoire: 'Responsable laboratoire'
+    };
+    var grid = document.getElementById('rdHeaderGrid');
+    var cells = grid ? grid.querySelectorAll('.col-md-4') : [];
+    var hItems = [];
+    cells.forEach(function(c) {
+        var label = c.querySelector('div:first-child') ? c.querySelector('div:first-child').textContent.trim() : '';
+        var val   = c.querySelector('div:last-child')  ? c.querySelector('div:last-child').textContent.trim()  : '';
+        if (label && val) hItems.push({label: label, val: val});
+    });
+    for (var i = 0; i < hItems.length; i += 3) {
+        headerRows += '<tr>';
+        for (var j = i; j < Math.min(i + 3, hItems.length); j++) {
+            headerRows += '<td><div class="hdr-label">' + hItems[j].label + '</div>'
+                        + '<div class="hdr-val">'   + hItems[j].val   + '</div></td>';
+        }
+        /* fill empty cells */
+        for (var k = hItems.length % 3; k > 0 && k < 3 && i + 3 > hItems.length; k++) {
+            headerRows += '<td></td>';
+        }
+        headerRows += '</tr>';
+    }
+
+    /* collect result rows */
+    var resultRows = '';
+    var trs = document.querySelectorAll('#rdResultatsBody tr');
+    trs.forEach(function(tr, idx) {
+        var tds = tr.querySelectorAll('td');
+        if (!tds.length) return;
+        var bg = idx % 2 === 0 ? '#f8faf9' : '#ffffff';
+        resultRows += '<tr style="background:' + bg + ';">'
+            + '<td style="color:#6c7c74; width:40px;">' + (tds[0] ? tds[0].textContent.trim() : '') + '</td>'
+            + '<td style="font-weight:600;">'           + (tds[1] ? tds[1].textContent.trim() : '') + '</td>'
+            + '<td style="color:#6c7c74;">'             + (tds[2] ? tds[2].textContent.trim() : '') + '</td>'
+            + '<td style="font-weight:700; color:#26735B;">' + (tds[3] ? tds[3].textContent.trim() : '') + '</td>'
+            + '<td style="color:#6c7c74;">'             + (tds[4] ? tds[4].textContent.trim() : '') + '</td>'
+            + '</tr>';
+    });
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+        + '<title>' + title + '</title>'
+        + '<style>'
+        + '*{box-sizing:border-box; margin:0; padding:0;}'
+        + 'body{font-family:"Segoe UI",Arial,sans-serif; background:#f0f5f2; padding:32px; color:#1a2e26;}'
+        + '.page{background:#fff; border-radius:12px; padding:32px 36px; max-width:960px; margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,.10);}'
+        + '.doc-header{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #26735B; padding-bottom:14px; margin-bottom:22px;}'
+        + '.doc-header .left .doc-title{font-size:1.2rem; font-weight:700; color:#26735B;}'
+        + '.doc-header .left .doc-file{font-size:.75rem; color:#6c7c74; margin-top:3px;}'
+        + '.doc-header .right{text-align:right; font-size:.75rem; color:#6c7c74;}'
+        + '.doc-header .right .doc-date{font-weight:700; color:#1a2e26; font-size:.88rem;}'
+        + '.section{border:1px solid #dde8e3; border-radius:10px; padding:18px 22px; margin-bottom:20px;}'
+        + '.section-title{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#26735B; margin-bottom:14px; display:flex; align-items:center; gap:6px;}'
+        + '.hdr-table{width:100%; border-collapse:collapse;}'
+        + '.hdr-table td{padding:8px 12px; vertical-align:top; width:33%;}'
+        + '.hdr-label{font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6c7c74; margin-bottom:3px;}'
+        + '.hdr-val{font-size:.85rem; font-weight:600; color:#1a2e26;}'
+        + '.res-table{width:100%; border-collapse:collapse; font-size:.85rem;}'
+        + '.res-table thead tr{background:#f0f5f2;}'
+        + '.res-table th{padding:9px 12px; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6c7c74; border-bottom:1px solid #dde8e3;}'
+        + '.res-table td{padding:9px 12px; border-bottom:1px solid #f0f5f2;}'
+        + '@media print{'
+        + '  body{background:#fff; padding:0;}'
+        + '  .page{box-shadow:none; border-radius:0; padding:20px;}'
+        + '}'
+        + '</style></head><body>'
+        + '<div class="page">'
+        + '  <div class="doc-header">'
+        + '    <div class="left"><div class="doc-title">' + title + '</div><div class="doc-file">' + filename + '</div></div>'
+        + '    <div class="right"><div>Rapport d\'analyse</div><div class="doc-date">' + date + '</div></div>'
+        + '  </div>'
+        + '  <div class="section">'
+        + '    <div class="section-title">ℹ Informations générales</div>'
+        + '    <table class="hdr-table"><tbody>' + headerRows + '</tbody></table>'
+        + '  </div>'
+        + '  <div class="section">'
+        + '    <div class="section-title">▤ Résultats des essais</div>'
+        + '    <table class="res-table">'
+        + '      <thead><tr><th>#</th><th>Essai</th><th>Méthode</th><th>Résultat</th><th>Unité</th></tr></thead>'
+        + '      <tbody>' + resultRows + '</tbody>'
+        + '    </table>'
+        + '  </div>'
+        + '</div>'
+        + '<script>window.onload=function(){window.print();};<\/script>'
+        + '</body></html>';
+
+    var w = window.open('', '_blank', 'width=960,height=750');
+    w.document.write(html);
+    w.document.close();
+}
+</script>
+
 {% if is_admin %}
-// ── LIVE FILTER ──
-const adminSearch = document.getElementById('admin-search');
-const adminStatus = document.getElementById('admin-status-filter');
-const rows = document.querySelectorAll('.report-row');
-const resultsCount = document.getElementById('results-count');
+<script>
+var adminSearch  = document.getElementById('admin-search');
+var adminStatus  = document.getElementById('admin-status-filter');
+var rows         = document.querySelectorAll('.report-row');
+var resultsCount = document.getElementById('results-count');
 
 function liveFilter() {
-    const q = adminSearch.value.toLowerCase().trim();
-    const status = adminStatus.value;
-    let visible = 0;
-    rows.forEach(row => {
-        const matchText = !q || row.dataset.title.includes(q) || row.dataset.user.includes(q);
-        const matchStatus = !status || row.dataset.status === status;
-        const show = matchText && matchStatus;
+    var q      = adminSearch ? adminSearch.value.toLowerCase().trim() : '';
+    var status = adminStatus ? adminStatus.value : '';
+    var visible = 0;
+    rows.forEach(function(row) {
+        var matchText   = !q      || row.dataset.title.includes(q) || row.dataset.user.includes(q);
+        var matchStatus = !status || row.dataset.status === status;
+        var show = matchText && matchStatus;
         row.style.display = show ? '' : 'none';
         if (show) visible++;
     });
-    resultsCount.textContent = visible + ' rapport' + (visible !== 1 ? 's' : '');
+    if (resultsCount) resultsCount.textContent = visible + ' rapport' + (visible !== 1 ? 's' : '');
 }
 
-adminSearch.addEventListener('input', liveFilter);
-adminStatus.addEventListener('change', liveFilter);
-{% endif %}
+if (adminSearch) adminSearch.addEventListener('input', liveFilter);
+if (adminStatus) adminStatus.addEventListener('change', liveFilter);
 </script>
+{% endif %}
 {% endblock %}

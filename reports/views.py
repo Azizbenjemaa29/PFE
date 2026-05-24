@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.db.models import Q
 from django.http import FileResponse, Http404, JsonResponse
+from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_POST
 from .models import Report, RapportHeader, RapportResultat
@@ -15,6 +16,7 @@ MAX_UPLOAD_SIZE = 25 * 1024 * 1024  # 25 MB
 MAX_FILES_PER_BATCH = 10
 ALLOWED_EXTENSIONS = {'.pdf'}
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+ALLOWED_UPLOAD_EXTENSIONS = ALLOWED_EXTENSIONS | ALLOWED_IMAGE_EXTENSIONS
 
 User = get_user_model()
 
@@ -128,13 +130,8 @@ def upload_report(request):
 
         for f in files:
             ext = os.path.splitext(f.name)[1].lower()
-            if ext not in ALLOWED_EXTENSIONS:
-                messages.error(request, f"{f.name} : seuls les PDF natifs sont acceptés.")
-                fail_count += 1
-                continue
-            # Verify MIME type
-            if hasattr(f, 'content_type') and f.content_type and 'pdf' not in f.content_type.lower():
-                messages.error(request, f"{f.name} : type MIME invalide (PDF uniquement).")
+            if ext not in ALLOWED_UPLOAD_EXTENSIONS:
+                messages.error(request, f"{f.name} : formats acceptés — PDF, JPG, PNG, GIF, WebP.")
                 fail_count += 1
                 continue
             if f.size > MAX_UPLOAD_SIZE:
@@ -160,7 +157,7 @@ def upload_report(request):
             messages.success(request, f"{success_count} rapport(s) téléchargé(s) avec succès.")
         elif success_count and fail_count:
             messages.warning(request, f"{success_count} réussi(s), {fail_count} échec(s).")
-        return redirect('reports:dashboard')
+        return redirect(reverse('reports:dashboard') + '?uploaded=1')
 
     form = ReportForm()
     return render(request, 'reports/upload.html', {
@@ -191,6 +188,37 @@ def history(request):
         'status_filter': status_filter,
         'active_page': 'history',
     })
+
+
+@login_required
+def report_detail_json(request, pk):
+    report = get_object_or_404(Report, pk=pk)
+    if request.user.role != 'admin' and report.user != request.user:
+        raise Http404
+    try:
+        header = report.header
+        resultats = list(header.resultats.values('essai', 'methode_essai', 'resultat', 'unite'))
+        return JsonResponse({
+            'title': report.title,
+            'filename': report.filename(),
+            'uploaded_at': report.uploaded_at.strftime('%d/%m/%Y %H:%M'),
+            'header': {
+                'client': header.client,
+                'date_emission': header.date_emission or '',
+                'ose': header.ose,
+                'code': header.code,
+                'bon_de_commande': header.bon_de_commande,
+                'nature_echantillon': header.nature_echantillon,
+                'transport_par': header.transport_par,
+                'date_prelevement': str(header.date_prelevement) if header.date_prelevement else '',
+                'date_reception': str(header.date_reception) if header.date_reception else '',
+                'date_debut_essais': str(header.date_debut_essais) if header.date_debut_essais else '',
+                'responsable_laboratoire': header.responsable_laboratoire,
+            },
+            'resultats': resultats,
+        })
+    except RapportHeader.DoesNotExist:
+        return JsonResponse({'error': 'Données extraites non disponibles.'}, status=404)
 
 
 @login_required
@@ -229,6 +257,16 @@ def refuse_report(request, pk):
     report.status = 'REFUSED'
     report.save(update_fields=['status'])
     return redirect('reports:dashboard')
+
+
+@login_required
+def powerbi_dashboard(request):
+    if request.user.role != 'admin':
+        return redirect('reports:dashboard')
+    return render(request, 'reports/powerbi_dashboard.html', {
+        'is_admin': True,
+        'active_page': 'powerbi',
+    })
 
 
 @login_required

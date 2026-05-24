@@ -3,6 +3,10 @@
 
 {% block title %}{% trans "Nouveau rapport" %}{% endblock %}
 
+{% block extra_css %}
+.drop-zone.has-files { border-color: var(--primary); background: var(--primary-alpha); }
+{% endblock %}
+
 {% block content %}
 <div class="section-title">
     <i class="bi bi-cloud-upload"></i> {% trans "Nouveau rapport" %}
@@ -13,7 +17,7 @@
         <i class="bi bi-file-earmark-arrow-up me-2"></i>{% trans "Extraction PDF" %}
     </h5>
     <p style="color:var(--text-muted); font-size:.82rem; margin-bottom:18px;">
-        {% trans "Téléchargez un rapport PDF natif pour extraire automatiquement les données." %}
+        {% trans "Téléchargez un PDF, une image ou un scan — l'OCR extrait automatiquement les données." %}
     </p>
 
     <form method="post" action="{% url 'reports:upload_report' %}" enctype="multipart/form-data" id="ocr-form">
@@ -21,12 +25,15 @@
         <div class="row g-3">
             <div class="col-md-8">
                 <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-                    <div class="upload-icon"><i class="bi bi-file-earmark-pdf"></i></div>
+                    <div class="upload-icon">
+                        <i class="bi bi-file-earmark-pdf" style="color:#ef4444;"></i>
+                        <i class="bi bi-file-earmark-image" style="color:var(--primary); font-size:2rem; margin-left:-8px;"></i>
+                    </div>
                     <p><strong>{% trans "Cliquez ou glissez-déposez" %}</strong> {% trans "vos fichiers ici" %}</p>
-                    <p style="margin-top:4px;"><small>{% trans "PDF natif uniquement — max. 25 MB / fichier — 10 fichiers max" %}</small></p>
+                    <p style="margin-top:4px;"><small>{% trans "PDF, Images (JPG, PNG, WebP) — max. 25 MB / fichier — 10 fichiers max" %}</small></p>
                     <div class="file-list-preview" id="file-label" style="display:none;"></div>
-                    <input type="file" name="file" id="file-input" accept=".pdf"
-                        style="display:none;" multiple required>
+                    <input type="file" name="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                        style="display:none;" multiple required onchange="dzHandleChange(this)">
                 </div>
             </div>
             <div class="col-md-4 d-flex flex-column gap-2">
@@ -72,66 +79,97 @@
 
 {% block extra_js %}
 <script>
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const fileLabel = document.getElementById('file-label');
-const MAX_FILES = 10;
-const MAX_SIZE = 25 * 1024 * 1024;
+/* Global handler — called directly by onchange on the file input */
+function dzHandleChange(input) {
+    var MAX_SIZE  = 25 * 1024 * 1024;
+    var MAX_FILES = 10;
+    var dropZone  = document.getElementById('drop-zone');
+    var fileLabel = document.getElementById('file-label');
+    if (!dropZone || !fileLabel) return;
 
-function renderFileList() {
-    const files = Array.from(fileInput.files);
-    if (!files.length) { fileLabel.style.display = 'none'; return; }
-    fileLabel.innerHTML = `<i class="bi bi-paperclip me-1"></i>${files.length} {% trans "fichier(s) sélectionné(s)" %}`;
+    var files = Array.from(input.files);
+    if (!files.length) return;
+
+    /* validate */
+    var valid = [];
+    for (var i = 0; i < files.length; i++) {
+        var f   = files[i];
+        var ext = '.' + f.name.split('.').pop().toLowerCase();
+        if (['.pdf','.jpg','.jpeg','.png','.gif','.webp'].indexOf(ext) === -1) {
+            alert(f.name + ' : format non supporte (PDF, JPG, PNG, WebP).'); continue;
+        }
+        if (f.size > MAX_SIZE) { alert(f.name + ' : fichier trop volumineux (max 25 MB).'); continue; }
+        valid.push(f);
+    }
+    if (!valid.length) return;
+    if (valid.length > MAX_FILES) { alert('Maximum ' + MAX_FILES + ' fichiers.'); return; }
+
+    /* hide placeholder icons & text */
+    var icon = dropZone.querySelector('.upload-icon');
+    var ps   = dropZone.querySelectorAll('p');
+    if (icon) icon.style.display = 'none';
+    for (var j = 0; j < ps.length; j++) ps[j].style.display = 'none';
+
+    /* restyle drop zone */
+    dropZone.style.borderColor = '#26735B';
+    dropZone.style.borderStyle = 'solid';
+    dropZone.style.background  = 'rgba(38,115,91,0.07)';
+
+    /* build file list */
+    var html = '<div style="font-size:1rem;font-weight:700;color:#26735B;margin-bottom:10px;">'
+             + '<i class="bi bi-check-circle-fill me-2"></i>' + valid.length + ' fichier(s) pret(s)</div>';
+    for (var k = 0; k < valid.length; k++) {
+        var fk   = valid[k];
+        var size = fk.size > 1048576
+            ? (fk.size / 1048576).toFixed(1) + ' MB'
+            : Math.round(fk.size / 1024) + ' KB';
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;'
+              + 'background:#fff;border:1px solid #d1e8df;border-radius:8px;margin-bottom:6px;">'
+              + '<i class="bi bi-file-earmark-pdf" style="color:#ef4444;font-size:1.1rem;flex-shrink:0;"></i>'
+              + '<span style="font-size:.85rem;font-weight:600;color:#1a2e26;flex:1;word-break:break-all;">' + fk.name + '</span>'
+              + '<span style="font-size:.75rem;color:#6c7c74;flex-shrink:0;">' + size + '</span></div>';
+    }
+    fileLabel.innerHTML = html;
     fileLabel.style.display = 'block';
 }
 
-function applyFiles(fileArray) {
-    const valid = [];
-    for (const f of fileArray) {
-        const ext = '.' + f.name.split('.').pop().toLowerCase();
-        if (ext !== '.pdf') { alert(`${f.name} : PDF uniquement.`); continue; }
-        if (f.size > MAX_SIZE) { alert(`${f.name} : dépasse 25 MB`); continue; }
-        valid.push(f);
+(function() {
+    var dropZone  = document.getElementById('drop-zone');
+    var fileInput = document.getElementById('file-input');
+    if (!dropZone || !fileInput) return;
+
+    /* drag & drop */
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#26735B';
+    });
+    dropZone.addEventListener('dragleave', function() {
+        if (!fileInput.files.length) dropZone.style.borderColor = '';
+    });
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        var dt = new DataTransfer();
+        Array.from(e.dataTransfer.files).forEach(function(f) { dt.items.add(f); });
+        fileInput.files = dt.files;
+        dzHandleChange(fileInput);
+    });
+
+    /* progress bar on submit */
+    var ocrForm = document.getElementById('ocr-form');
+    if (ocrForm) {
+        ocrForm.addEventListener('submit', function() {
+            document.getElementById('ocr-progress').style.display = 'block';
+            var bar = document.getElementById('progress-bar');
+            var pct = document.getElementById('progress-pct');
+            var val = 0;
+            var iv = setInterval(function() {
+                val = Math.min(val + Math.random() * 12, 90);
+                bar.style.width = val + '%';
+                pct.textContent = Math.round(val) + '%';
+                if (val >= 90) clearInterval(iv);
+            }, 250);
+        });
     }
-    if (valid.length > MAX_FILES) { alert(`Maximum ${MAX_FILES} fichiers.`); return; }
-    const dt = new DataTransfer();
-    valid.forEach(f => dt.items.add(f));
-    fileInput.files = dt.files;
-    renderFileList();
-}
-
-fileInput.addEventListener('change', () => applyFiles(Array.from(fileInput.files)));
-dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault(); dropZone.classList.remove('dragover');
-    applyFiles(Array.from(e.dataTransfer.files));
-});
-
-const extractToggle = document.getElementById('extract-toggle');
-const extractHint = document.getElementById('extract-hint');
-const submitBtn = document.getElementById('submit-btn');
-extractToggle.addEventListener('change', () => {
-    if (extractToggle.checked) {
-        extractHint.textContent = '{% trans "Le rapport sera traité immédiatement." %}';
-        submitBtn.innerHTML = '<i class="bi bi-cpu me-1"></i> {% trans "Lancer l\'extraction" %}';
-    } else {
-        extractHint.textContent = '{% trans "Le rapport sera envoyé à l\'admin pour validation." %}';
-        submitBtn.innerHTML = '<i class="bi bi-send me-1"></i> {% trans "Envoyer à l\'admin" %}';
-    }
-});
-
-document.getElementById('ocr-form').addEventListener('submit', () => {
-    document.getElementById('ocr-progress').style.display = 'block';
-    const bar = document.getElementById('progress-bar');
-    const pct = document.getElementById('progress-pct');
-    let val = 0;
-    const iv = setInterval(() => {
-        val = Math.min(val + Math.random() * 12, 90);
-        bar.style.width = val + '%';
-        pct.textContent = Math.round(val) + '%';
-        if (val >= 90) clearInterval(iv);
-    }, 250);
-});
+})();
 </script>
 {% endblock %}
